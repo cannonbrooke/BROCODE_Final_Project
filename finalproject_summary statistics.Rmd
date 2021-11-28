@@ -1,0 +1,323 @@
+---
+title: "BROCODE Summary Statistics"
+author: "Aaron, Cannon, Josh, Ryan"
+subtitle: Final Project Summary Statistics
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+
+# Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
+
+library(knitr)
+
+
+# Change the number in set seed to your own favorite number
+set.seed(1818)
+options(width=70)
+options(scipen=99)
+
+
+# this sets text outputted in code chunks to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               # change fig.width and fig.height to change the code height and width by default
+               fig.width = 5.5,  
+               fig.height = 4.5,
+               fig.align='center')
+
+
+```
+
+```{r setup-2}
+
+# Always print this out before your assignment
+sessionInfo()
+getwd()
+
+```
+
+
+<!-- ### start answering your problem set here -->
+<!-- You may export your homework in either html or pdf, with the former usually being easier. 
+     To export or compile your Rmd file: click above on 'Knit' then 'Knit to HTML' -->
+<!-- Be sure to submit both your .Rmd file and the compiled .html or .pdf file for full credit -->
+
+
+```{r setup-3}
+
+# load all your libraries in this chunk 
+library('tidyverse')
+library("fs")
+library('here')
+library('dplyr')
+library('tidyverse')
+library('ggplot2')
+library('ggrepel')
+library('ggthemes')
+library('forcats')
+library('rsample')
+library('lubridate')
+library('ggthemes')
+library('kableExtra')
+library('pastecs')
+library('viridis')
+
+# note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+
+```
+
+
+
+## Final Project Cleaning and Summary Statistics 
+
+1a) Loading data
+
+```{r}
+
+#Reading the data in and doing minor initial cleaning in the function call
+#Reproducible data analysis should avoid all automatic string to factor conversions.
+#strip.white removes white space 
+#na.strings is a substitution so all that have "" will = na
+data <- read.csv("donor_data.csv",
+                 stringsAsFactors = FALSE,
+                 strip.white = TRUE,
+                 na.strings = "")
+
+```
+
+
+1b) Fixing the wonky DOB 
+
+```{r}
+
+#(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns 
+datacleaning <- data %>%
+  mutate(Birthdate = ifelse(Birthdate == "0001-01-01", NA, Birthdate)) %>%
+  mutate(Birthdate = mdy(Birthdate)) %>%
+  mutate(Age = as.numeric(floor(interval(start= Birthdate, end=Sys.Date())/duration(n=1, unit="years")))) %>%
+  mutate(Spouse.Birthdate = ifelse(Spouse.Birthdate == "0001-01-01", NA, Spouse.Birthdate)) %>%
+  mutate(Spouse.Birthdate = mdy(Spouse.Birthdate)) %>%
+  mutate(Spouse.Age = as.numeric(floor(interval(start= Spouse.Birthdate,
+                                                end=Sys.Date())/duration(n=1, unit="years")))) %>%
+  mutate(ID = as.numeric(ID))
+
+```
+
+1c Creating factor variable for sex 
+
+```{r}
+
+datacleaning <- 
+  datacleaning %>% 
+  mutate(sex_fct = 
+           fct_explicit_na(Sex)
+  )
+
+
+datacleaning <-
+datacleaning %>% 
+mutate(
+  sex_simple = 
+    fct_lump_n(Sex, n = 4)
+)
+
+#checking to see if its a factor
+class(datacleaning$sex_fct)
+
+#checking levels
+levels(datacleaning$sex_simple)
+
+#creating a table against Sex column 
+table(datacleaning$sex_fct, datacleaning$sex_simple)
+
+
+```
+
+
+1c Creating age ranges 
+
+```{r}
+
+#splitting up the age into ranges and creating category for easy visualization 
+datacleaning <- datacleaning %>%
+  mutate(age_range = 
+    ifelse(Age %in% 10:19, "10 < 20 year olds",
+    ifelse(Age %in% 20:29, "20 < 30 year olds", 
+    ifelse(Age %in% 30:39, "30 < 40 year olds",
+    ifelse(Age %in% 40:49, "40 < 50 year olds",
+    ifelse(Age %in% 50:59, "50 < 60 year olds",
+    ifelse(Age %in% 60:69, "60 < 70 year olds",
+    ifelse(Age %in% 70:79, "70 < 80 year olds",
+    ifelse(Age %in% 80:89, "80 < 90 year olds",
+    ifelse(Age %in% 90:99, "90 < 100 year olds",
+    ifelse(Age %in% 100:109, "100 < 110 year olds",
+    ifelse(Age %in% 110:120, "110 - 120  year olds",
+    NA))))))))))))
+
+#seeing what we have
+table(datacleaning$age_range)
+#50-60 is the most common age range 
+
+```
+
+1d #Mean, Median, and Count of Giving in Age Ranges 
+
+```{r}
+
+age_range_giving <- datacleaning %>%
+  group_by(age_range) %>%
+  summarise(avg_giving = mean(HH.Lifetime.Giving, na.rm = TRUE),
+            med_giving = median(HH.Lifetime.Giving, na.rm = TRUE),
+            amount_of_people_in_age_range = n())
+
+
+
+```
+
+
+
+
+
+## Question 2
+
+2a) Plotting average giving by age range 
+
+
+```{r}
+
+ggplot(age_range_giving, aes(avg_giving, age_range)) +
+  geom_bar(stat = "identity")
+
+
+```
+
+
+2b) Count of donors based on age range (another way to look at it)
+
+
+```{r}
+
+ggplot(datacleaning, 
+       aes(age_range)) + 
+       geom_bar() + 
+       theme(axis.text.x = element_text(angle=45,
+                                        hjust=1)) + 
+  labs(title = "Count of Age Ranges", x = "", y = "")
+  
+
+```
+
+2c) Boxplot of the Age Ranges Against the Lifetime Giving Amounts with a log scale applied - the reason we applied log scale is to resolve issues with visualizations that skew towards large values in our dataset. 
+
+
+```{r}
+
+ggplot(datacleaning, aes(age_range,HH.Lifetime.Giving,fill = age_range)) + 
+  geom_boxplot(
+  outlier.colour = "red") + 
+  scale_y_log10() +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+  
+
+```
+
+2d) Splitting by age and gender 
+
+
+```{r}
+
+
+#creating boxplots 
+datacleaning %>% 
+  filter(Age < 100) %>% #removing the weird outliers that are over 100 
+  filter(Sex %in% c("M", "F")) %>%
+  ggplot(aes(Sex, Age)) + 
+  geom_boxplot() + 
+  theme_economist() + 
+  ggtitle("Ages of Donors Based on Gender") + 
+  xlab(NULL) + ylab(NULL)
+  
+  
+  
+
+
+```
+
+2e) Distribution of people in the states that they live.
+
+```{r}
+
+  datacleaning %>%
+  mutate(State = ifelse(State == " ", "NA", State)) %>%
+  filter(State != "NA") %>%
+  group_by(State) %>%
+  summarise(Count = length(State)) %>%
+  filter(Count > 800) %>%
+  arrange(-Count) %>%
+  kable(col.names = c("Donor's State", "Count")) %>%
+  kable_styling(bootstrap_options = c("condensed"),
+                full_width = F)
+  
+ 
+  
+  
+
+
+```
+
+2f) Looking at all donors first gift amount. 75% made a first gift of <100. 
+
+```{r}
+
+ no_non_donors <- datacleaning %>%
+  filter(Lifetime.Giving != 0)
+  
+nd <- quantile(no_non_donors$HH.First.Gift.Amount, probs = c(.25,.50,.75,.9,.99), na.rm = TRUE)
+
+nd <- as.data.frame(nd)
+
+nd %>%
+  kable(col.names = "Quantile") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = F)
+  
+  
+
+
+```
+
+
+
+## Modeling for you 
+
+
+3a) Linear model 
+
+```{r}
+#converting married Y and N to 1 and 0 
+datacleaning <- datacleaning %>%
+      mutate(Married = ifelse(Married == "N",0,1))
+ 
+
+mod1lm <- lm( Married ~ Lifetime.Giving,
+           data = datacleaning)
+
+summary(mod1lm)
+  
+
+
+```
+
