@@ -29,6 +29,10 @@ dataCleaning <- data %>%
   mutate(ID = as.numeric(ID))
 
 
-donor_data_tidy <- dataCleaning %>%
+donor_data_tidy <- datacleaning %>%
   mutate(Category.Codes = strsplit(as.character(Category.Codes), "|", fixed = TRUE)) %>%
   unnest(Category.Codes)
+
+donor_dat_tiday
+
+datacleaning %>% group_by(ID) %>% count() %>% arrange(desc(n))

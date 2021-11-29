@@ -74,6 +74,8 @@ library('ggthemes')
 library('kableExtra')
 library('pastecs')
 library('viridis')
+library('plotly')
+
 
 # note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
 
@@ -91,7 +93,7 @@ library('viridis')
 #Reproducible data analysis should avoid all automatic string to factor conversions.
 #strip.white removes white space 
 #na.strings is a substitution so all that have "" will = na
-data <- read.csv("donor_data.csv",
+data <- read.csv(here::here("final_project", "donor_data.csv"),
                  stringsAsFactors = FALSE,
                  strip.white = TRUE,
                  na.strings = "")
@@ -99,11 +101,11 @@ data <- read.csv("donor_data.csv",
 ```
 
 
-1b) Fixing the wonky DOB 
+1b) Fixing the wonky DOB & Data cleanup
 
 ```{r}
 
-#(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns 
+#(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns and adding two fields for assignment and number of children
 datacleaning <- data %>%
   mutate(Birthdate = ifelse(Birthdate == "0001-01-01", NA, Birthdate)) %>%
   mutate(Birthdate = mdy(Birthdate)) %>%
@@ -112,44 +114,10 @@ datacleaning <- data %>%
   mutate(Spouse.Birthdate = mdy(Spouse.Birthdate)) %>%
   mutate(Spouse.Age = as.numeric(floor(interval(start= Spouse.Birthdate,
                                                 end=Sys.Date())/duration(n=1, unit="years")))) %>%
-  mutate(ID = as.numeric(ID))
-
-```
-
-1c Creating factor variable for sex 
-
-```{r}
-
-datacleaning <- 
-  datacleaning %>% 
-  mutate(sex_fct = 
-           fct_explicit_na(Sex)
-  )
-
-
-datacleaning <-
-datacleaning %>% 
-mutate(
-  sex_simple = 
-    fct_lump_n(Sex, n = 4)
-)
-
-#checking to see if its a factor
-class(datacleaning$sex_fct)
-
-#checking levels
-levels(datacleaning$sex_simple)
-
-#creating a table against Sex column 
-table(datacleaning$sex_fct, datacleaning$sex_simple)
-
-
-```
-
-
-1c Creating age ranges 
-
-```{r}
+  mutate(ID = as.numeric(ID)) %>% 
+  mutate(Assignment_flag = ifelse(is.na(Assignment.Number), 0,1)) %>% 
+  mutate( No_of_Children = ifelse(is.na(Child.1.ID),0,
+                            ifelse(is.na(Child.2.ID),1,2)))
 
 #splitting up the age into ranges and creating category for easy visualization 
 datacleaning <- datacleaning %>%
@@ -170,6 +138,85 @@ datacleaning <- datacleaning %>%
 #seeing what we have
 table(datacleaning$age_range)
 #50-60 is the most common age range 
+
+#Removing Columns that provide no benefit 
+
+data_cleaned_columns <- subset(datacleaning,select = -c(Assignment.Number
+                                                        ,Assignment.has.Historical.Mngr
+                                                        ,Assignment.Date
+                                                        ,Assignment.Manager
+                                                        ,Assignment.Role
+                                                        ,Assignment.Title
+                                                        ,Assignment.Status
+                                                        ,Strategy
+                                                        ,Progress.Level
+                                                        ,Assignment.Group
+                                                        ,Assignment.Category
+                                                        ,Funding.Method
+                                                        ,Expected.Book.Date
+                                                        ,Qualification.Amount
+                                                        ,Expected.Book.Amount
+                                                        ,Expected.Book.Date
+                                                        ,Hard.Gift.Total
+                                                        ,Soft.Credit.Total
+                                                        ,Total.Assignment.Gifts
+                                                        ,No.of.Pledges
+                                                        ,Proposal..
+                                                        ,Proposal.Notes
+                                                        ,HH.Life.Hard.Credit
+                                                        ,HH.Life.Soft.Credit
+                                                        ,HH.Life.Spouse.Credit
+                                                        ,Last.Contact.By.Manager
+                                                        ,X..of.Contacts.By.Manager))
+  
+#checking for duplicates N >1 indicates a records values are in the file twice 
+data_cleaned_columns %>% group_by(ID) %>% count() %>% arrange(desc(n))
+
+#removing duplicated records
+
+data_cleaned <- unique(data_cleaned_columns)
+
+#n = 1 no ID with multiple records cleaned of dupes
+data_cleaned %>% group_by(ID) %>% count() %>% arrange(desc(n))
+
+```
+
+1c Creating factor variable for sex 
+
+```{r}
+
+data_cleaned <- 
+  data_cleaned %>% 
+  mutate(sex_fct = 
+           fct_explicit_na(Sex)
+  )
+
+
+data_cleaned <-
+data_cleaned %>% 
+mutate(
+  sex_simple = 
+    fct_lump_n(Sex, n = 4)
+)
+
+#checking to see if its a factor
+class(data_cleaned$sex_fct)
+
+#checking levels
+levels(data_cleaned$sex_simple)
+
+#creating a table against Sex column 
+table(data_cleaned$sex_fct, data_cleaned$sex_simple)
+
+
+```
+
+
+
+
+```{r}
+
+
 
 ```
 
@@ -309,10 +356,10 @@ nd %>%
 ```{r}
 #converting married Y and N to 1 and 0 
 datacleaning <- datacleaning %>%
-      mutate(Married = ifelse(Married == "N",0,1))
+      mutate(Married_simple = ifelse(Married == "N",0,1))
  
 
-mod1lm <- lm( Married ~ Lifetime.Giving,
+mod1lm <- lm( Married_simple ~ Lifetime.Giving,
            data = datacleaning)
 
 summary(mod1lm)
@@ -320,4 +367,22 @@ summary(mod1lm)
 
 
 ```
+3a) 
 
+```{r}
+p <- datacleaning %>%
+  ggplot(aes(Age)) + geom_histogram(bins=30, fill = "blue") + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(5,100,by = 20)) +
+  scale_y_continuous(breaks = seq(20,100,by = 20)) + xlim(c(20,100))
+
+ggplotly(p)
+  
+p
+
+ggplot(data = datacleaning, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
+
+  
+
+
+```
