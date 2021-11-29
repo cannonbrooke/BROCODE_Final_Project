@@ -117,7 +117,9 @@ datacleaning <- data %>%
   mutate(ID = as.numeric(ID)) %>% 
   mutate(Assignment_flag = ifelse(is.na(Assignment.Number), 0,1)) %>% 
   mutate( No_of_Children = ifelse(is.na(Child.1.ID),0,
-                            ifelse(is.na(Child.2.ID),1,2)))
+                            ifelse(is.na(Child.2.ID),1,2))) %>% 
+  mutate(county_fct = 
+           fct_explicit_na(County))
 
 #splitting up the age into ranges and creating category for easy visualization 
 datacleaning <- datacleaning %>%
