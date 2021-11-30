@@ -13,7 +13,7 @@ output:
 
 # Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
 
-library(knitr)
+library('knitr')
 
 
 # Change the number in set seed to your own favorite number
@@ -97,8 +97,9 @@ library('tidyquant')
 #na.strings is a substitution so all that have "" will = na
 
 
+#data <- read.csv(here::here("final_project", "donor_data.csv"),
 
-data <- read.csv(here::here("final_project", "donor_data.csv"),
+                 data <- read.csv(here::here("datasets", "donor_data.csv"),
                  stringsAsFactors = FALSE,
                  strip.white = TRUE,
                  na.strings = "")
@@ -142,6 +143,10 @@ datacleaning <- datacleaning %>%
     ifelse(Age %in% 100:109, "100 < 110 year olds",
     ifelse(Age %in% 110:120, "110 - 120 year olds",
     NA))))))))))))
+#Do levels work within mutate?
+#Can we turn these strings into factors?
+
+#factor(data_cleaning$age_range, levels = c("10 < 20 year olds", "20 < 30 year olds", "Manufacturing", "Professional_and_Related_Service", "Trade", "Other"))
 
 #seeing what we have
 table(datacleaning$age_range)
@@ -273,6 +278,13 @@ age_range_giving <- datacleaning %>%
 
 ```{r}
 
+
+age_range_giving <-
+  age_range_giving %>%
+  mutate(age_range = factor(age_range, levels = c("10 < 20 year olds","20 < 30 year olds","30 < 40 year olds","40 < 50 year olds","50 < 60 year olds","60 < 70 year olds","70 < 80 year olds","80 < 90 year olds","90 < 100 year olds","100 < 110 year olds","110 - 120 year olds","NA")))
+  
+  
+
 ggplot(age_range_giving, aes(avg_giving, age_range)) +
   geom_bar(stat = "identity")
 
@@ -284,6 +296,8 @@ ggplot(age_range_giving, aes(avg_giving, age_range)) +
 
 
 ```{r}
+
+
 
 ggplot(datacleaning, 
        aes(age_range)) + 
