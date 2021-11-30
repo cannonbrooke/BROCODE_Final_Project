@@ -85,7 +85,7 @@ library('tidyquant')
 
 
 
-## Final Project Cleaning and Summary Statistics 
+## Step 1: Data Cleaning and Summary Statistics 
 
 1a) Loading data
 
@@ -180,7 +180,12 @@ datacleaning <- subset(datacleaning,select = -c(Assignment.Number
                                                         ,HH.Life.Soft.Credit
                                                         ,HH.Life.Spouse.Credit
                                                         ,Last.Contact.By.Manager
-                                                        ,X..of.Contacts.By.Manager))
+                                                        ,X..of.Contacts.By.Manager,
+                                                DonorSearch.Range,
+iWave.Range,
+WealthEngine.Range,
+Philanthropic.Commitments
+                                                ))
   
 #checking for duplicates N >1 indicates a records values are in the file twice 
 datacleaning %>% group_by(ID) %>% count() %>% arrange(desc(n))
@@ -271,7 +276,7 @@ age_range_giving <- datacleaning %>%
 
 
 
-## Question 2
+## Step 2 - Plots
 
 2a) Plotting average giving by age range 
 
