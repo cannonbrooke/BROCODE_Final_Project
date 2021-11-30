@@ -96,13 +96,10 @@ library('tidyquant')
 #strip.white removes white space 
 #na.strings is a substitution so all that have "" will = na
 
-<<<<<<< Updated upstream
 
+#data <- read.csv(here::here("final_project", "donor_data.csv"),
 
-data <- read.csv(here::here("final_project", "donor_data.csv"),
-=======
-data <- read.csv(here::here("datasets", "donor_data.csv"),
->>>>>>> Stashed changes
+                 data <- read.csv(here::here("datasets", "donor_data.csv"),
                  stringsAsFactors = FALSE,
                  strip.white = TRUE,
                  na.strings = "")
