@@ -430,6 +430,10 @@ p
 ggplot(data = datacleaning, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
 
   
+<<<<<<< HEAD
+#test125
+=======
 #testryan
+>>>>>>> 22ce373d1e845b8c9d3c65eb58f1212f3edd0aff
 
 ```
