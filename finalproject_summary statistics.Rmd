@@ -99,7 +99,7 @@ library('tidyquant')
 
 #data <- read.csv(here::here("final_project", "donor_data.csv"),
 
-                 data <- read.csv(here::here("datasets", "donor_data.csv"),
+                 data <- read.csv(here::here("final_project", "donor_data.csv"),
                  stringsAsFactors = FALSE,
                  strip.white = TRUE,
                  na.strings = "")
@@ -230,6 +230,100 @@ table(data_cleaned$sex_fct, data_cleaned$sex_simple)
 ```
 
 
+
+1d Creating factor variable for donor segment 
+
+```{r}
+
+datacleaning <- 
+  datacleaning %>% 
+  mutate(donorseg_fct = 
+           fct_explicit_na(Donor.Segment)
+  )
+
+
+datacleaning <-
+datacleaning %>% 
+mutate(
+  donorseg_simple = 
+    fct_lump_n(Donor.Segment, n = 4)
+)
+
+#checking to see if its a factor
+class(datacleaning$donorseg_fct)
+
+#checking levels
+levels(datacleaning$donorseg_simple)
+
+#creating a table
+table(datacleaning$donorseg_fct, datacleaning$donorseg_simple)
+
+
+```
+
+1e Creating factor variable for call preferences 
+
+```{r}
+
+#CONTACT RULES
+
+datacleaning <- 
+  datacleaning %>% 
+  mutate(contact_fct = 
+           fct_explicit_na(Contact.Rules)
+  )
+
+
+datacleaning <-
+datacleaning %>% 
+mutate(
+  contact_simple = 
+    fct_lump_n(Contact.Rules, n = 4)
+)
+
+#checking to see if its a factor
+class(datacleaning$contact_fct)
+
+#checking levels
+levels(datacleaning$contact_simple)
+
+#creating a table
+#table(datacleaning$contact_fct, datacleaning$contact_simple)
+
+```
+
+
+```{r}
+
+#SPOUSE MAIL
+
+datacleaning <- 
+  datacleaning %>% 
+  mutate(spomail_fct = 
+           fct_explicit_na(Spouse.Mail.Rules)
+  )
+
+
+datacleaning <-
+datacleaning %>% 
+mutate(
+  spomail_simple = 
+    fct_lump_n(Spouse.Mail.Rules, n = 4)
+)
+
+#checking to see if its a factor
+class(datacleaning$spomail_fct)
+
+#checking levels
+levels(datacleaning$spomail_simple)
+
+#creating a table 
+#table(datacleaning$spomail_fct, datacleaning$spomail_simple)
+
+
+```
+
+
 Removing the +4 after the zip code
 
 ```{r}
@@ -254,6 +348,34 @@ data_cleaned_columns <-data_cleaned_columns %>%
 
 
 ```
+
+Cleaning conferral dates, Last Contact By Anyone, Household First Gift Date
+
+```{r}
+
+#I don't think this code is quite right...
+
+datacleaning <- datacleaning %>%
+  mutate(Conferral.Date.1 = ifelse(Conferral.Date.1 == "0001-01-01", NA, Conferral.Date.1)) %>%
+  mutate(Conferral.Date.1 = mdy(Conferral.Date.1)) %>%
+  mutate(Conferral.Date.2 = ifelse(Conferral.Date.2 == "0001-01-01", NA, Conferral.Date.2)) %>%
+  mutate(Conferral.Date.2 = mdy(Conferral.Date.2)) %>%
+  mutate(Last.Contact.By.Anyone = ifelse(Last.Contact.By.Anyone == "0001-01-01", NA, Last.Contact.By.Anyone)) %>%
+  mutate(Last.Contact.By.Anyone = mdy(Last.Contact.By.Anyone)) %>%
+ mutate(HH.First.Gift.Date = ifelse(HH.First.Gift.Date == "0001-01-01", NA, HH.First.Gift.Date)) %>%
+  mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date))
+
+
+
+```
+
+
+
+
+
+
+
+
 
 
 
@@ -429,11 +551,6 @@ p
 
 ggplot(data = datacleaning, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
 
-  
-<<<<<<< HEAD
-#test125
-=======
-#testryan
->>>>>>> 22ce373d1e845b8c9d3c65eb58f1212f3edd0aff
+
 
 ```
