@@ -6,14 +6,13 @@ output:
   html_document:
     df_print: paged
   html_notebook: default
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 
 # Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
 
-library('knitr')
+library(knitr)
 
 
 # Change the number in set seed to your own favorite number
@@ -76,8 +75,8 @@ library('kableExtra')
 library('pastecs')
 library('viridis')
 library('plotly')
-library('plyr')
 library('tidyquant')
+
 
 # note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
 
@@ -85,7 +84,7 @@ library('tidyquant')
 
 
 
-## Step 1: Data Cleaning and Summary Statistics 
+## Final Project Cleaning and Summary Statistics 
 
 1a) Loading data
 
@@ -95,15 +94,10 @@ library('tidyquant')
 #Reproducible data analysis should avoid all automatic string to factor conversions.
 #strip.white removes white space 
 #na.strings is a substitution so all that have "" will = na
-
-
-#data <- read.csv(here::here("final_project", "donor_data.csv"),
-
-                 data <- read.csv(here::here("final_project", "donor_data.csv"),
+data <- read.csv(here::here("final_project", "donor_data.csv"),
                  stringsAsFactors = FALSE,
                  strip.white = TRUE,
                  na.strings = "")
-
 
 ```
 
@@ -113,7 +107,6 @@ library('tidyquant')
 ```{r}
 
 #(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns and adding two fields for assignment and number of children
-
 datacleaning <- data %>%
   mutate(Birthdate = ifelse(Birthdate == "0001-01-01", NA, Birthdate)) %>%
   mutate(Birthdate = mdy(Birthdate)) %>%
@@ -126,7 +119,6 @@ datacleaning <- data %>%
   mutate(Assignment_flag = ifelse(is.na(Assignment.Number), 0,1)) %>% 
   mutate( No_of_Children = ifelse(is.na(Child.1.ID),0,
                             ifelse(is.na(Child.2.ID),1,2)))
-  
 
 #splitting up the age into ranges and creating category for easy visualization 
 datacleaning <- datacleaning %>%
@@ -141,21 +133,18 @@ datacleaning <- datacleaning %>%
     ifelse(Age %in% 80:89, "80 < 90 year olds",
     ifelse(Age %in% 90:99, "90 < 100 year olds",
     ifelse(Age %in% 100:109, "100 < 110 year olds",
-    ifelse(Age %in% 110:120, "110 - 120 year olds",
+    ifelse(Age %in% 110:120, "110 - 120  year olds",
     NA))))))))))))
-#Do levels work within mutate?
-#Can we turn these strings into factors?
-
-#factor(data_cleaning$age_range, levels = c("10 < 20 year olds", "20 < 30 year olds", "Manufacturing", "Professional_and_Related_Service", "Trade", "Other"))
 
 #seeing what we have
 table(datacleaning$age_range)
 #50-60 is the most common age range 
 
-#Removing Columns that provide no benefit - we decided to remove data cleaned columns and over write datacleaning
+#Removing Columns that provide no benefit 
 
-datacleaning <- subset(datacleaning,select = -c(Assignment.Number
+data_cleaned_columns <- subset(datacleaning,select = -c(Assignment.Number
                                                         ,Assignment.has.Historical.Mngr
+                                                        ,Suffix
                                                         ,Assignment.Date
                                                         ,Assignment.Manager
                                                         ,Assignment.Role
@@ -180,15 +169,46 @@ datacleaning <- subset(datacleaning,select = -c(Assignment.Number
                                                         ,HH.Life.Soft.Credit
                                                         ,HH.Life.Spouse.Credit
                                                         ,Last.Contact.By.Manager
-                                                        ,X..of.Contacts.By.Manager,
-                                                DonorSearch.Range,
-iWave.Range,
-WealthEngine.Range,
-Philanthropic.Commitments
-                                                ))
+                                                        ,X..of.Contacts.By.Manager))
+#cleaning up zip codes removing -4 after 
+data_cleaned_columns$Zip <- gsub(data_cleaned_columns$Zip, pattern="-.*", replacement = "")
+
+#adding zip code data and column 
+zip <- read.csv(here::here("final_project", "Salary_Zipcode.csv"),
+                 stringsAsFactors = FALSE,
+                 strip.white = TRUE,
+                 na.strings = "")
+
+#adding zip salary column
+data_cleaned_columns <-data_cleaned_columns %>%
+    mutate(zipcode_slry = VLOOKUP(Zip, zip, NAME, S1902_C03_002E))
+
+#adding scholarship data (y/n)
+schlr <- read.csv(here::here("final_project", "scholarship.csv"),
+                 stringsAsFactors = FALSE,
+                 strip.white = TRUE,
+                 na.strings = "")
+
+#adding scholarship column
+data_cleaned_columns <-data_cleaned_columns %>%
+    mutate(scholarship = VLOOKUP(ID, schlr, ID, SCHOLARSHIP)) 
+
+#replacing NA with 0 
+ data_cleaned_columns$scholarship <- replace_na(data_cleaned_columns$scholarship,'0')
+ 
+#replacing Y with 1 
+data_cleaned_columns$scholarship<-ifelse(data_cleaned_columns$scholarship=="Y",1,0)
+
+#checking how many are N
+table(data_cleaned_columns$scholarship)
+
+
+#checking and deleting scholarship column 
+class(data_cleaned_columns$schlr_fct)
+data_cleaned_columns = subset(data_cleaned_columns, select = -c(scholarship))
   
 #checking for duplicates N >1 indicates a records values are in the file twice 
-datacleaning %>% group_by(ID) %>% count() %>% arrange(desc(n))
+data_cleaned_columns %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 #removing duplicated records
 
@@ -199,7 +219,7 @@ data_cleaned %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 ```
 
-1c Creating factor variable for sex 
+1c Creating factor variable for sex and married 
 
 ```{r}
 
@@ -226,159 +246,27 @@ levels(data_cleaned$sex_simple)
 #creating a table against Sex column 
 table(data_cleaned$sex_fct, data_cleaned$sex_simple)
 
-
-```
-
-
-
-1d Creating factor variable for donor segment 
-
-```{r}
-
-datacleaning <- 
-  datacleaning %>% 
-  mutate(donorseg_fct = 
-           fct_explicit_na(Donor.Segment)
+#making married a factor 
+data_cleaned_columns <- 
+  data_cleaned_columns %>% 
+  mutate(married_fct = 
+           fct_explicit_na(Married)
   )
 
-
-datacleaning <-
-datacleaning %>% 
-mutate(
-  donorseg_simple = 
-    fct_lump_n(Donor.Segment, n = 4)
-)
-
 #checking to see if its a factor
-class(datacleaning$donorseg_fct)
-
-#checking levels
-levels(datacleaning$donorseg_simple)
-
-#creating a table
-table(datacleaning$donorseg_fct, datacleaning$donorseg_simple)
+class(data_cleaned$married_fct)
 
 
 ```
 
-1e Creating factor variable for call preferences 
 
-```{r}
-
-#CONTACT RULES
-
-datacleaning <- 
-  datacleaning %>% 
-  mutate(contact_fct = 
-           fct_explicit_na(Contact.Rules)
-  )
-
-
-datacleaning <-
-datacleaning %>% 
-mutate(
-  contact_simple = 
-    fct_lump_n(Contact.Rules, n = 4)
-)
-
-#checking to see if its a factor
-class(datacleaning$contact_fct)
-
-#checking levels
-levels(datacleaning$contact_simple)
-
-#creating a table
-#table(datacleaning$contact_fct, datacleaning$contact_simple)
-
-```
 
 
 ```{r}
 
-#SPOUSE MAIL
-
-datacleaning <- 
-  datacleaning %>% 
-  mutate(spomail_fct = 
-           fct_explicit_na(Spouse.Mail.Rules)
-  )
-
-
-datacleaning <-
-datacleaning %>% 
-mutate(
-  spomail_simple = 
-    fct_lump_n(Spouse.Mail.Rules, n = 4)
-)
-
-#checking to see if its a factor
-class(datacleaning$spomail_fct)
-
-#checking levels
-levels(datacleaning$spomail_simple)
-
-#creating a table 
-#table(datacleaning$spomail_fct, datacleaning$spomail_simple)
 
 
 ```
-
-
-Removing the +4 after the zip code
-
-```{r}
-
-data_cleaned_columns$Zip <- gsub(data_cleaned_columns$Zip, pattern="-.*", replacement = "")
-
-```
-
-Adding zip code data and doing a vlookup to add 
-
-```{r}
-
-zip <- read.csv(here::here("final_project", "Salary_Zipcode.csv"),
-                 stringsAsFactors = FALSE,
-                 strip.white = TRUE,
-                 na.strings = "")
-
-data_cleaned_columns <-data_cleaned_columns %>%
-    mutate(zipcode_slry = VLOOKUP(Zip, zip, NAME, S1902_C03_002E))
-
-
-
-
-```
-
-Cleaning conferral dates, Last Contact By Anyone, Household First Gift Date
-
-```{r}
-
-#I don't think this code is quite right...
-
-datacleaning <- datacleaning %>%
-  mutate(Conferral.Date.1 = ifelse(Conferral.Date.1 == "0001-01-01", NA, Conferral.Date.1)) %>%
-  mutate(Conferral.Date.1 = mdy(Conferral.Date.1)) %>%
-  mutate(Conferral.Date.2 = ifelse(Conferral.Date.2 == "0001-01-01", NA, Conferral.Date.2)) %>%
-  mutate(Conferral.Date.2 = mdy(Conferral.Date.2)) %>%
-  mutate(Last.Contact.By.Anyone = ifelse(Last.Contact.By.Anyone == "0001-01-01", NA, Last.Contact.By.Anyone)) %>%
-  mutate(Last.Contact.By.Anyone = mdy(Last.Contact.By.Anyone)) %>%
- mutate(HH.First.Gift.Date = ifelse(HH.First.Gift.Date == "0001-01-01", NA, HH.First.Gift.Date)) %>%
-  mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date))
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
 
 1d #Mean, Median, and Count of Giving in Age Ranges 
 
@@ -398,19 +286,12 @@ age_range_giving <- datacleaning %>%
 
 
 
-## Step 2 - Plots
+## Question 2
 
 2a) Plotting average giving by age range 
 
 
 ```{r}
-
-
-age_range_giving <-
-  age_range_giving %>%
-  mutate(age_range = factor(age_range, levels = c("10 < 20 year olds","20 < 30 year olds","30 < 40 year olds","40 < 50 year olds","50 < 60 year olds","60 < 70 year olds","70 < 80 year olds","80 < 90 year olds","90 < 100 year olds","100 < 110 year olds","110 - 120 year olds","NA")))
-  
-  
 
 ggplot(age_range_giving, aes(avg_giving, age_range)) +
   geom_bar(stat = "identity")
@@ -423,8 +304,6 @@ ggplot(age_range_giving, aes(avg_giving, age_range)) +
 
 
 ```{r}
-
-
 
 ggplot(datacleaning, 
        aes(age_range)) + 
@@ -551,6 +430,7 @@ p
 
 ggplot(data = datacleaning, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
 
+  
 
 
 ```
