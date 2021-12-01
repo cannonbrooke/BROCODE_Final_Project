@@ -75,6 +75,7 @@ library('kableExtra')
 library('pastecs')
 library('viridis')
 library('plotly')
+library('scales')
 #library('tidyquant')
 
 
@@ -394,9 +395,6 @@ mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, 
 ```
 
 
-
-
-
 1f #Mean, Median, and Count of Giving in Age Ranges 
 
 ```{r}
@@ -410,7 +408,24 @@ age_range_giving <- data_cleaned %>%
 
 
 ```
+DonorSegment Analysis
 
+```{r}
+#grouping by donorsegment and analyzing 
+data_cleaned %>%
+  group_by(donorseg_fct) %>%
+  summarise(Count = length(donorseg_fct),
+            mean_total_giv = mean(HH.Lifetime.Giving)) %>%
+  arrange(-Count) %>%
+  filter(Count >= 100) %>%
+  #added scales package to have the values show in dollar 
+  mutate(mean_total_giv = dollar(mean_total_giv)) %>%
+  kable(col.names = c("Donor Segment", "Count", "Mean HH Lifetime Giving"), align=rep('c', 3)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = F)
+  
+
+```
 
 
 
