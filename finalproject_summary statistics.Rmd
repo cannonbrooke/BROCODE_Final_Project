@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v5
+subtitle: BUS696 Final Project v6
 output:
   html_document:
     df_print: paged
@@ -587,6 +587,21 @@ nd %>%
 
 ## Modeling for you 
 
+Split data
+
+``` {r}
+
+library("rsample")
+
+data_split <- initial_split(dataclean, prop = 0.75)
+
+data_train <- training(data_split)
+data_test <- testing(data_split)
+
+```
+
+
+
 
 3a) Linear model 
 
@@ -623,3 +638,181 @@ ggplot(data = dataclean, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20
 
 
 ```
+
+
+
+
+MORE MODELS
+
+
+```{r}
+
+# Set family to binomial to set logistic function
+# Run the model on the training set
+
+#donor_logit1 <-
+#  glm(dependent ~ indy1 + indy2,
+#      family = "binomial",
+#      data = data)
+
+#summary(donor_logit1)
+
+#Used to identify the base genre
+#exp(donor_logit1$coefficients)
+
+```
+
+RIDGE
+
+```{r}
+
+#library('glmnet')
+#library('glmnetUtils')
+
+#ridge_fit <- cv.glmnet(depedent ~ indy1 + indy2,
+#                       data = data,
+#                       alpha = 0)
+
+#Alpha 0 sets the Ridge
+
+#print(ridge_fit$lambda.min)
+#
+#print(ridge_fit$lambda.1se)
+
+
+```
+
+LASSO
+
+```{r}
+
+#Using cv.glmnet from class
+
+#lasso_fit <- cv.glmnet(dependent ~ indy1 + indy2,
+#                       data = data,
+                       #Alpha 1 for lasso
+#                       alpha = 1)
+
+#print(lasso_fit$lambda.min)
+#
+#print(lasso_fit$lambda.1se)
+
+```
+
+```{r}
+
+#coef(lasso_mod)
+#Default setting is lambda.1se
+
+#From the book - showing convergence with lambda values
+#plot(lasso_mod$glmnet.fit, xvar="lambda")
+#abline(v=log(c(lasso_mod$lambda.min, lasso_mod$lambda.1se)), lty=2)
+
+```
+
+```{r}
+
+#enet_mod <- cva.glmnet(dependent ~ indy1 + indy2,
+#                       data = data,
+#                       alpha = seq(0,1, by = 0.1))
+
+#print(enet_mod)
+#plot(enet_mod)
+
+
+```
+
+ELASTICNET
+
+```{r elasticnet}
+
+minlossplot(enet_mod, 
+            cv.type = "min")
+
+get_alpha <- function(fit) {
+  alpha <- fit$alpha
+  error <- sapply(fit$modlist, 
+                  function(mod) {min(mod$cvm)})
+  alpha[which.min(error)]
+}
+
+get_model_params <- function(fit) {
+  alpha <- fit$alpha
+  lambdaMin <- sapply(fit$modlist, `[[`, "lambda.min")
+  lambdaSE <- sapply(fit$modlist, `[[`, "lambda.1se")
+  error <- sapply(fit$modlist, function(mod) {min(mod$cvm)})
+  best <- which.min(error)
+  data.frame(alpha = alpha[best], lambdaMin = lambdaMin[best],
+             lambdaSE = lambdaSE[best], eror = error[best])
+}
+
+best_alpha <- get_alpha(enet_mod)
+print(best_alpha)
+get_model_params(enet_mod)
+
+best_mod <- enet_mod$modlist[[which(enet_mod$alpha == best_alpha)]]
+
+print(best_mod)
+
+
+```
+
+Ridges plot - could be useful for plotting donations vs donor segment
+
+```{r}
+
+library('ggridges')
+
+summary(data_train$variable)
+
+ggplot(data_train, aes(x = var1, y = var2)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(0, 400)) + 
+      ggtitle("Title")
+
+```
+
+Random Forest
+
+```{r}
+
+library('randomForest')
+
+rf_fit_donor <- randomForest(dependent ~ ., 
+                       data = data_train,
+                       type = classification,
+                       mtry = 7,
+                       na.action = na.roughfix,
+                       ntree = 200,
+                       importance=TRUE
+                       )
+
+print(rf_fit_donor)
+
+
+```
+
+```{r, fig.width = 6, fig.height = 6}
+
+varImpPlot(rf_fit_donor, sort = TRUE, 
+           n.var = 5,
+           type = 2, class = NULL, scale = TRUE, 
+           main = deparse(substitute(rf_fit_donor)))
+
+
+```
+
+```{r}
+
+library('randomForestExplainer')
+
+plot_min_depth_distribution(
+  rf_fit_donor,
+  k = 10,
+  min_no_of_trees = 0,
+  mean_sample = "top_trees",
+  mean_scale = FALSE,
+  mean_round = 2,
+  main = "Distribution of minimal depth and its mean"
+)
+
+```
+
