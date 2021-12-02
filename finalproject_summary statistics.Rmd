@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v4
+subtitle: BUS696 Final Project v5
 output:
   html_document:
     df_print: paged
@@ -181,8 +181,6 @@ dataclean <- subset(dataclean,select = -c(Assignment.Number
                                                         ,No.of.Pledges
                                                         ,Proposal..
                                                         ,Proposal.Notes
-                                                        ,HH.Life.Hard.Credit
-                                                        ,HH.Life.Soft.Credit
                                                         ,HH.Life.Spouse.Credit
                                                         ,Last.Contact.By.Manager
                                                         ,X..of.Contacts.By.Manager
@@ -240,25 +238,8 @@ dataclean %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 ```
 
-1c Creating factor variables for sex and married 
 
-```{r}
-
-
-
-
-#making married a factor 
-dataclean <- 
-  dataclean %>% 
-  
-#checking to see if its a factor
-class(dataclean$married_fct)
-
-
-```
-
-
-1d Creating many factor variables
+1d Creating many many factor variables
 
 ```{r}
 
