@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v3
+subtitle: BUS696 Final Project v4
 output:
   html_document:
     df_print: paged
@@ -244,36 +244,13 @@ dataclean %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 ```{r}
 
-dataclean <- 
-  dataclean %>% 
-  mutate(sex_fct = 
-           fct_explicit_na(Sex)
-  )
 
 
-dataclean <-
-dataclean %>% 
-mutate(
-  sex_simple = 
-    fct_lump_n(Sex, n = 4)
-)
-
-#checking to see if its a factor
-class(dataclean$sex_fct)
-
-#checking levels
-levels(dataclean$sex_simple)
-
-#creating a table against Sex column 
-table(dataclean$sex_fct, dataclean$sex_simple)
 
 #making married a factor 
 dataclean <- 
   dataclean %>% 
-  mutate(married_fct = 
-           fct_explicit_na(Married)
-  )
-
+  
 #checking to see if its a factor
 class(dataclean$married_fct)
 
@@ -287,8 +264,16 @@ class(dataclean$married_fct)
 
 dataclean <- 
   dataclean %>% 
+  #SEX
+  mutate(sex_fct = 
+           fct_explicit_na(Sex),
+sex_simple = 
+    fct_lump_n(Sex, n = 4),
+#MARRIED
+married_fct = 
+           fct_explicit_na(Married),
   #DONOR SEGMENT
-  mutate(donorseg_fct = 
+  donorseg_fct = 
            fct_explicit_na(Donor.Segment),
          donorseg_simple = 
            fct_lump_n(Donor.Segment, n = 4),
@@ -361,20 +346,76 @@ dataclean <-
          hhfirstgift_fct = 
            fct_explicit_na(HH.First.Gift.Fund),
          hhfirstgift_simple = 
-           fct_lump_n(HH.First.Gift.Fund, n = 10)
+           fct_lump_n(HH.First.Gift.Fund, n = 10),
+#CHILD 1 ENROLL STATUS
+         ch1_enroll_fct = 
+           fct_explicit_na(Child.1.Enroll.Status),
+         ch1_enroll_simple = 
+           fct_lump_n(Child.1.Enroll.Status, n = 4),
+#CHILD 1 MAJOR
+         ch1_maj_fct = 
+           fct_explicit_na(Child.1.Major),
+         ch1_maj_simple = 
+           fct_lump_n(Child.1.Major, n = 4),
+#CHILD 1 MINOR
+         ch1_min_fct = 
+           fct_explicit_na(Child.1.Minor),
+         ch1_min_simple = 
+           fct_lump_n(Child.1.Minor, n = 4),
+#CHILD 1 SCHOOL
+         ch1_school_fct = 
+           fct_explicit_na(Child.1.School),
+         ch1_school_simple = 
+           fct_lump_n(Child.1.School, n = 4),
+#CHILD 1 FEEDER
+         ch1_feeder_fct = 
+           fct_explicit_na(Child.1.Feeder.School),
+         ch1_feeder_simple = 
+           fct_lump_n(Child.1.Feeder.School, n = 4),
+#CHILD 2 ENROLL STATUS
+         ch1_enroll_fct = 
+           fct_explicit_na(Child.2.Enroll.Status),
+         ch2_enroll_simple = 
+           fct_lump_n(Child.2.Enroll.Status, n = 4),
+#CHILD 2 MAJOR
+         ch2_maj_fct = 
+           fct_explicit_na(Child.2.Major),
+         ch2_maj_simple = 
+           fct_lump_n(Child.2.Major, n = 4),
+#CHILD 2 MINOR
+         ch2_min_fct = 
+           fct_explicit_na(Child.2.Minor),
+         ch2_min_simple = 
+           fct_lump_n(Child.2.Minor, n = 4),
+#CHILD 2 SCHOOL
+         ch2_school_fct = 
+           fct_explicit_na(Child.2.School),
+         ch2_school_simple = 
+           fct_lump_n(Child.2.School, n = 4),
+#CHILD 2 FEEDER
+         ch2_feeder_fct = 
+           fct_explicit_na(Child.2.Feeder.School),
+         ch2_feeder_simple = 
+           fct_lump_n(Child.2.Feeder.School, n = 4)
     )
 
 
+
 #checking to see if its a factor
+#class(dataclean$sex_fct)
 #class(dataclean$donorseg_fct)
 #class(dataclean$contact_fct)
 #class(dataclean$spomail_fct)
 
 #checking levels
+#levels(dataclean$sex_simple)
 #levels(dataclean$donorseg_simple)
 #levels(dataclean$contact_simple)
 #levels(dataclean$spomail_simple)
-levels(dataclean$hhfirstgift_simple)
+#levels(dataclean$hhfirstgift_simple)
+
+#creating a table against Sex column 
+#table(dataclean$sex_fct, dataclean$sex_simple)
 
 
 ```
