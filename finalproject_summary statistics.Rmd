@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v7
+subtitle: BUS696 Final Project v8
 output:
   html_document:
     df_print: paged
@@ -135,26 +135,92 @@ dataclean <- dataclean %>%
     ifelse(Age %in% 100:120, "100+ year olds",
     NA)))))))))))
 
-#slry range 
-dataclean <- dataclean %>%
-  mutate(zipslry_range = 
-    ifelse(zipcode_slry %in% 90000:99000, "90K-99K",
-    ifelse(zipcode_slry %in% 100000:149000, "100K-149K", 
-    ifelse(zipcode_slry %in% 150000:199000, "150K-199K",
-    ifelse(zipcode_slry %in% 200000:249000, "200K-249K",
-    ifelse(zipcode_slry %in% 250000:299000, "250K-299K",
-    ifelse(zipcode_slry %in% 300000:349000, "300K-349K",
-    ifelse(zipcode_slry %in% 350000:399000, "350K-399K",
-    ifelse(zipcode_slry %in% 400000:499000, "400K-499K",
-    ifelse(zipcode_slry %in% 500000:999000, "500K-999K",
-    NA))))))))))
-
-glimpse(dataclean$zipslry_range)
-
 
 #seeing what we have
 table(dataclean$age_range)
 #50-60 is the most common age range 
+
+#creating a region column using the county data and the OMB MSA (Metropolitan Statistical Area) definitions
+
+dataclean <- dataclean %>%
+  mutate(region = 
+    ifelse(County == "San Luis Obispo" & State == "CA", "So Cal",
+    ifelse(County == "Kern" & State == "CA", "So Cal",
+    ifelse(County == "San Bernardino" & State == "CA", "So Cal",
+    ifelse(County == "Santa Barbara" & State == "CA", "So Cal",
+    ifelse(County == "Ventura" & State == "CA", "So Cal",
+    ifelse(County == "Los Angeles" & State == "CA", "So Cal",
+    ifelse(County == "Orange" & State == "CA", "So Cal",
+    ifelse(County == "Riverside" & State == "CA", "So Cal",
+    ifelse(County == "San Diego" & State == "CA", "So Cal",
+    ifelse(County == "Imperial" & State == "CA", "So Cal",
+    ifelse(County == "King" & State == "WA", "Seattle",
+    ifelse(County == "Snohomish" & State == "WA", "Seattle",
+    ifelse(County == "Pierce" & State == "WA", "Seattle",
+    ifelse(County == "Clackamas" & State == "OR", "Portland",
+    ifelse(County == "Columbia" & State == "OR", "Portland",
+    ifelse(County == "Multnomah" & State == "OR", "Portland",
+    ifelse(County == "Washington" & State == "OR", "Portland",
+    ifelse(County == "Yamhill" & State == "OR", "Portland",
+    ifelse(County == "Clark" & State == "WA", "Portland",
+    ifelse(County == "Skamania" & State == "WA", "Portland",
+    ifelse(County == "Denver" & State == "CO", "Denver",
+    ifelse(County == "Arapahoe" & State == "CO", "Denver",
+    ifelse(County == "Jefferson" & State == "CO", "Denver",
+    ifelse(County == "Adams" & State == "CO", "Denver",
+    ifelse(County == "Douglas" & State == "CO", "Denver",
+    ifelse(County == "Broomfield" & State == "CO", "Denver",    
+    ifelse(County == "Elbert" & State == "CO", "Denver",
+    ifelse(County == "Park" & State == "CO", "Denver",
+    ifelse(County == "Clear Creek" & State == "CO", "Denver",
+    ifelse(County == "Alameda" & State == "CA", "Bay Area",
+    ifelse(County == "Contra Costa" & State == "CA", "Bay Area",
+    ifelse(County == "Marin" & State == "CA", "Bay Area",
+    ifelse(County == "Monterey" & State == "CA", "Bay Area",
+    ifelse(County == "Napa" & State == "CA", "Bay Area",
+    ifelse(County == "San Benito" & State == "CA", "Bay Area",
+    ifelse(County == "San Francisco" & State == "CA", "Bay Area",
+    ifelse(County == "San Mateo" & State == "CA", "Bay Area",
+    ifelse(County == "Santa Clara" & State == "CA", "Bay Area",
+    ifelse(County == "Santa Cruz" & State == "CA", "Bay Area",
+    ifelse(County == "Solano" & State == "CA", "Bay Area",
+    ifelse(County == "Sonoma" & State == "CA", "Bay Area",
+           NA))))))))))))))))))))))))))))))))))))))))))
+
+dataclean <- dataclean %>%
+  mutate(region = 
+    ifelse(County == "Kings" & State == "NY", "New York",
+    ifelse(County == "Queens" & State == "NY", "New York",
+    ifelse(County == "New York" & State == "NY", "New York",
+    ifelse(County == "Bronx" & State == "NY", "New York",
+    ifelse(County == "Richmond" & State == "NY", "New York",
+    ifelse(County == "Westchester" & State == "NY", "New York",
+    ifelse(County == "Bergen" & State == "NY", "New York",
+    ifelse(County == "Hudson" & State == "NY", "New York",
+    ifelse(County == "Passaic" & State == "NY", "New York",
+    ifelse(County == "Putnam" & State == "NY", "New York",
+    ifelse(County == "Rockland" & State == "NY", "New York",
+    ifelse(County == "Suffolk" & State == "NY", "New York",
+    ifelse(County == "Nassau" & State == "NY", "New York",
+    ifelse(County == "Middlesex" & State == "NJ", "New York",
+    ifelse(County == "Monmouth" & State == "NJ", "New York",
+    ifelse(County == "Ocean" & State == "NJ", "New York",
+    ifelse(County == "Somerset" & State == "NJ", "New York",
+    ifelse(County == "Essex" & State == "NJ", "New York",
+    ifelse(County == "Union" & State == "NJ", "New York",
+    ifelse(County == "Morris" & State == "NJ", "New York",
+    ifelse(County == "Sussex" & State == "NJ", "New York",
+    ifelse(County == "Hunterdon" & State == "NJ", "New York",
+    ifelse(County == "Pike" & State == "NJ", "New York",
+    region))))))))))))))))))))))))
+
+
+# code nor cal region as all others in CA not already defined
+
+dataclean <- dataclean %>%
+  mutate(region = 
+    ifelse(State == "CA" & is.na(region) == TRUE, "Nor Cal", region))
+
 
 #Removing Columns that provide no benefit 
 
@@ -198,9 +264,26 @@ zip <- read.csv(here::here("final_project", "Salary_Zipcode.csv"),
                  strip.white = TRUE,
                  na.strings = "")
 
+
 #adding zip salary column
 dataclean <-dataclean %>%
     mutate(zipcode_slry = VLOOKUP(Zip, zip, NAME, S1902_C03_002E))
+
+#slry range 
+dataclean <- dataclean %>%
+  mutate(zipslry_range = 
+    ifelse(zipcode_slry %in% 90000:99000, "90K-99K",
+    ifelse(zipcode_slry %in% 100000:149000, "100K-149K", 
+    ifelse(zipcode_slry %in% 150000:199000, "150K-199K",
+    ifelse(zipcode_slry %in% 200000:249000, "200K-249K",
+    ifelse(zipcode_slry %in% 250000:299000, "250K-299K",
+    ifelse(zipcode_slry %in% 300000:349000, "300K-349K",
+    ifelse(zipcode_slry %in% 350000:399000, "350K-399K",
+    ifelse(zipcode_slry %in% 400000:499000, "400K-499K",
+    ifelse(zipcode_slry %in% 500000:999000, "500K-999K",
+    NA))))))))))
+
+glimpse(dataclean$zipslry_range)
 
 #adding scholarship data (y/n)
 schlr <- read.csv(here::here("final_project", "scholarship.csv"),
