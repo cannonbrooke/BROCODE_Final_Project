@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v6
+subtitle: BUS696 Final Project v7
 output:
   html_document:
     df_print: paged
@@ -377,7 +377,8 @@ married_fct =
          ch2_feeder_fct = 
            fct_explicit_na(Child.2.Feeder.School),
          ch2_feeder_simple = 
-           fct_lump_n(Child.2.Feeder.School, n = 4)
+           fct_lump_n(Child.2.Feeder.School, n = 4),
+
     )
 
 
@@ -451,9 +452,55 @@ dataclean %>%
 
 ```
 
+First gift size 
+```{r}
+aq <- quantile(dataclean$HH.First.Gift.Amount, probs = c(.25,.50,.75,.9,.99), na.rm = TRUE)
+
+aq <- as.data.frame(aq)
+
+aq$aq <- dollar(aq$aq)
+
+aq %>%
+  kable(col.names = "Quantile") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = F)
+  
+
+```
+Consecutive giving
+```{r}
+#consecutive years of giving 
+dataclean %>%
+  filter(Max.Consec.Fiscal.Years > 0) %>%
+  ggplot(aes(Max.Consec.Fiscal.Years)) + geom_histogram(fill = "#002845", bins = 20) + 
+  theme_economist_white() +
+  ggtitle("Consecutive Years of Giving Distribution") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,2)) +
+  scale_y_continuous(breaks = seq(0,10000000,5000)) 
 
 
-1f #Mean, Median, and Count of Giving in Age Ranges 
+
+```
+
+Lifetime giving based on number of children 
+
+```{r}
+dataclean %>%
+  filter(HH.Lifetime.Giving <= 10000) %>%
+  filter(HH.Lifetime.Giving > 0) %>%
+  mutate(`No_of_Children` = as.factor(`No_of_Children`)) %>%
+  ggplot(aes(HH.Lifetime.Giving, fill = `No_of_Children`)) + geom_histogram(bins = 30) + theme_economist_white() +
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,100000,1000)) +
+  scale_y_continuous(breaks = seq(0,100000000,5000)) +
+  ggtitle("Giving distribution and number of children")+ 
+  scale_fill_manual(values=c("#002845", "#00cfcc", "#ff9973"))
+
+
+
+```
+
+
+Mean, Median, and Count of Giving in Age Ranges 
 
 ```{r}
 
@@ -464,6 +511,7 @@ age_range_giving <- dataclean %>%
             amount_of_people_in_age_range = n())
 
 
+glimpse(age_range_giving)
 
 ```
 
@@ -534,11 +582,41 @@ dataclean %>%
   ggtitle("Ages of Donors Based on Gender") + 
   xlab(NULL) + ylab(NULL)
   
-  
-  
+
+```
+Giving by gender
+
+
+```{r}
+
+
+q <- ggplot(dataclean)
+q + stat_summary_bin(
+  aes(y = HH.Lifetime.Giving, x = Sex), 
+  fun.y = "mean", geom = "bar")
+
+```
+
+Mean age by gender
+
+
+```{r}
+#breakdown of sexs 
+tally(group_by(dataclean, Sex))
+
+summarize(group_by(dataclean, Sex), 
+          avg_giving = mean(HH.Lifetime.Giving, na.rm = TRUE),
+          avg_age = mean(Age, na.rm = TRUE),
+          med_age = median(Age, na.rm = TRUE))
+
+#grouping by sex and age range for slides 
+tally(group_by(dataclean, Sex, age_range))
+
 
 
 ```
+
+
 
 2e) Distribution of people in the states that they live.
 
@@ -639,8 +717,48 @@ ggplot(data = dataclean, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20
 
 ```
 
+Another Histogram
 
 
+```{r}
+
+dataclean %>%
+  filter(Age >= 10) %>%
+  filter(Age <= 90) %>%
+  ggplot(aes(Age)) + geom_histogram(fill = "#002845", bins = 20) + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,10000000,2000)) 
+
+```
+Age distribution by gender 
+
+```{r}
+#Age Gender filtered out below 15 and above 90 - also removed U X the weird values 
+dataclean %>%
+  filter(Age >= 15) %>%
+  filter(Age <= 90) %>%
+  mutate(Sex = as.factor(Sex)) %>%
+  filter(Sex != "U") %>%
+  filter(Sex != "X") %>%
+  ggplot(aes(Age, fill = Sex)) + geom_histogram(bins = 25) + theme_economist_white() +
+  ggtitle("Age Distribution by Gender") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,10)) +
+  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
+```
+
+Donor age distribution by marital status 
+
+```{r}
+#Age Marital Status
+dataclean %>%
+  filter(Age >= 20) %>%
+  filter(Age <= 85) %>%
+  ggplot(aes(Age, fill = Married)) + geom_histogram(bins = 25) + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution by Marital Status") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
+```
 
 MORE MODELS
 
