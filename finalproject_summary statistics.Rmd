@@ -101,8 +101,7 @@ data <- read.csv(here::here("final_project", "donor_data.csv"),
                  na.strings = "")
 
 
-getwd()
-setwd('C:/Users/cabrooke/Documents/GitHub/BROCODE_Final_Project')
+
 ```
 
 
@@ -127,17 +126,16 @@ dataclean <- data %>%
 #splitting up the age into ranges and creating category for easy visualization 
 dataclean <- dataclean %>%
   mutate(age_range = 
-    ifelse(Age %in% 10:19, "10 < 20 year olds",
-    ifelse(Age %in% 20:29, "20 < 30 year olds", 
-    ifelse(Age %in% 30:39, "30 < 40 year olds",
-    ifelse(Age %in% 40:49, "40 < 50 year olds",
-    ifelse(Age %in% 50:59, "50 < 60 year olds",
-    ifelse(Age %in% 60:69, "60 < 70 year olds",
-    ifelse(Age %in% 70:79, "70 < 80 year olds",
-    ifelse(Age %in% 80:89, "80 < 90 year olds",
-    ifelse(Age %in% 90:99, "90 < 100 year olds",
-    ifelse(Age %in% 100:120, "100+ year olds",
-    NA)))))))))))
+    ifelse(Age %in% 10:19, "10 < 20 years old",
+    ifelse(Age %in% 20:29, "20 < 30 years old", 
+    ifelse(Age %in% 30:39, "30 < 40 years old",
+    ifelse(Age %in% 40:49, "40 < 50 years old",
+    ifelse(Age %in% 50:59, "50 < 60 years old",
+    ifelse(Age %in% 60:69, "60 < 70 years old",
+    ifelse(Age %in% 70:79, "70 < 80 years old",
+    ifelse(Age %in% 80:89, "80 < 90 years old",
+    ifelse(Age %in% 90:120, "90+ years old",
+    NA))))))))))
 
 
 #seeing what we have
@@ -615,9 +613,9 @@ glimpse(age_range_giving)
 
 age_range_giving <-
   age_range_giving %>%
-  mutate(age_range = factor(age_range, levels = c("10 < 20 year olds","20 < 30 year olds","30 < 40 year olds","40 < 50 year olds","50 < 60 year olds","60 < 70 year olds","70 < 80 year olds","80 < 90 year olds","90 < 100 year olds","100+ year olds","NA")))
+  mutate(age_range = factor(age_range))
 
-ggplot(age_range_giving, aes(avg_giving, age_range)) +
+ggplot(age_range_giving, aes(age_range, avg_giving)) +
   geom_bar(stat = "identity")
 
 
@@ -917,14 +915,13 @@ LASSO
 
 #Using cv.glmnet from class
 
-#lasso_fit <- cv.glmnet(dependent ~ indy1 + indy2,
-#                       data = data,
+lasso_fit <- cv.glmnet(Lifetime.Giving ~ school1_fct + maj1_fct + degree1_fct + donorseg_fct,
+                       data = data_train,
                        #Alpha 1 for lasso
-#                       alpha = 1)
+                       alpha = 1)
 
-#print(lasso_fit$lambda.min)
-#
-#print(lasso_fit$lambda.1se)
+print(lasso_fit$lambda.min)
+print(lasso_fit$lambda.1se)
 
 ```
 
