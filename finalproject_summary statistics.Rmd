@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v10
+subtitle: BUS696 Final Project v11
 output:
   html_document:
     df_print: paged
@@ -122,6 +122,25 @@ dataclean <- data %>%
   mutate(Assignment_flag = ifelse(is.na(Assignment.Number), 0,1)) %>% 
   mutate( No_of_Children = ifelse(is.na(Child.1.ID),0,
                             ifelse(is.na(Child.2.ID),1,2)))
+
+#conferral dates
+dataclean <- dataclean %>%
+  
+  mutate(Conferral.Date.1 = ifelse(Conferral.Date.1 == "0001-01-01", NA, Conferral.Date.1)) %>%
+  mutate(Conferral.Date.1 = mdy(Conferral.Date.1)) %>%
+  mutate(Conferral.Date.1.Age = as.numeric(floor(interval(start= Conferral.Date.1, end=Sys.Date())/duration(n=1, unit="years")))) %>%
+  
+  mutate(Conferral.Date.2 = ifelse(Conferral.Date.2 == "0001-01-01", NA, Conferral.Date.2)) %>%
+  mutate(Conferral.Date.2 = mdy(Conferral.Date.2)) %>%
+  mutate(Conferral.Date.2.Age = as.numeric(floor(interval(start= Conferral.Date.2, end=Sys.Date())/duration(n=1, unit="years")))) %>%
+  
+  mutate(Last.Contact.By.Anyone = ifelse(Last.Contact.By.Anyone == "0001-01-01", NA, Last.Contact.By.Anyone)) %>%
+  mutate(Last.Contact.By.Anyone = mdy(Last.Contact.By.Anyone)) %>%
+  mutate(Last.Contact.Age = as.numeric(floor(interval(start= Last.Contact.By.Anyone, end=Sys.Date())/duration(n=1, unit="years")))) %>%
+  
+ mutate(HH.First.Gift.Date = ifelse(HH.First.Gift.Date == "0001-01-01", NA, HH.First.Gift.Date)) %>%
+  mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date)) %>%
+mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, end=Sys.Date())/duration(n=1, unit="years"))))
 
 #splitting up the age into ranges and creating category for easy visualization 
 dataclean <- dataclean %>%
@@ -274,18 +293,19 @@ dataclean <-dataclean %>%
 #slry range 
 dataclean <- dataclean %>%
   mutate(zipslry_range = 
-    ifelse(zipcode_slry %in% 90000:99000, "90K-99K",
-    ifelse(zipcode_slry %in% 100000:149000, "100K-149K", 
-    ifelse(zipcode_slry %in% 150000:199000, "150K-199K",
-    ifelse(zipcode_slry %in% 200000:249000, "200K-249K",
-    ifelse(zipcode_slry %in% 250000:299000, "250K-299K",
-    ifelse(zipcode_slry %in% 300000:349000, "300K-349K",
-    ifelse(zipcode_slry %in% 350000:399000, "350K-399K",
-    ifelse(zipcode_slry %in% 400000:499000, "400K-499K",
-    ifelse(zipcode_slry %in% 500000:999000, "500K-999K",
-    NA))))))))))
+    ifelse(zipcode_slry %in% 10000:89999, "90K-99K",
+    ifelse(zipcode_slry %in% 90000:99999, "90K-99K",
+    ifelse(zipcode_slry %in% 100000:149999, "100K-149K", 
+    ifelse(zipcode_slry %in% 150000:199999, "150K-199K",
+    ifelse(zipcode_slry %in% 200000:249999, "200K-249K",
+    ifelse(zipcode_slry %in% 250000:299999, "250K-299K",
+    ifelse(zipcode_slry %in% 300000:349999, "300K-349K",
+    ifelse(zipcode_slry %in% 350000:399999, "350K-399K",
+    ifelse(zipcode_slry %in% 400000:499999, "400K-499K",
+    ifelse(zipcode_slry %in% 500000:999999, "500K-999K",
+    NA)))))))))))
 
-glimpse(dataclean$zipslry_range)
+sum(is.na(dataclean$zipcode_slry))
 
 #adding scholarship data (y/n)
 schlr <- read.csv(here::here("final_project", "scholarship.csv"),
@@ -334,7 +354,7 @@ dataclean <-
   mutate(sex_fct = 
            fct_explicit_na(Sex),
 sex_simple = 
-    fct_lump_n(Sex, n = 4),
+    fct_lump_n(Sex, n = 2),
 #MARRIED
 married_fct = 
            fct_explicit_na(Married),
@@ -488,35 +508,6 @@ married_fct =
 ```
 
 
-1e Cleaning format on Conferral dates, Last Contact By Anyone, Household First Gift Date
-Then turning them into aged quantities...
-
-```{r}
-
-#I don't think this code is quite right...getting negative values for aging
-#Maybe we should just extract YEAR from these variables
-
-dataclean <- dataclean %>%
-  
-  mutate(Conferral.Date.1 = ifelse(Conferral.Date.1 == "0001-01-01", NA, Conferral.Date.1)) %>%
-  mutate(Conferral.Date.1 = mdy(Conferral.Date.1)) %>%
-  mutate(Conferral.Date.1.Age = as.numeric(floor(interval(start= Conferral.Date.1, end=Sys.Date())/duration(n=1, unit="years")))) %>%
-  
-  mutate(Conferral.Date.2 = ifelse(Conferral.Date.2 == "0001-01-01", NA, Conferral.Date.2)) %>%
-  mutate(Conferral.Date.2 = mdy(Conferral.Date.2)) %>%
-  mutate(Conferral.Date.2.Age = as.numeric(floor(interval(start= Conferral.Date.2, end=Sys.Date())/duration(n=1, unit="years")))) %>%
-  
-  mutate(Last.Contact.By.Anyone = ifelse(Last.Contact.By.Anyone == "0001-01-01", NA, Last.Contact.By.Anyone)) %>%
-  mutate(Last.Contact.By.Anyone = mdy(Last.Contact.By.Anyone)) %>%
-  mutate(Last.Contact.Age = as.numeric(floor(interval(start= Last.Contact.By.Anyone, end=Sys.Date())/duration(n=1, unit="years")))) %>%
-  
- mutate(HH.First.Gift.Date = ifelse(HH.First.Gift.Date == "0001-01-01", NA, HH.First.Gift.Date)) %>%
-  mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date)) %>%
-mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, end=Sys.Date())/duration(n=1, unit="years"))))
-
-
-
-```
 
 DonorSegment Analysis
 
@@ -616,7 +607,9 @@ age_range_giving <-
   mutate(age_range = factor(age_range))
 
 ggplot(age_range_giving, aes(age_range, avg_giving)) +
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity")+
+  theme(axis.text.x = element_text(angle=45,
+                                        hjust=1))
 
 
 ```
@@ -674,11 +667,13 @@ Giving by gender
 
 ```{r}
 
-
+#remove NAs U X 
 q <- ggplot(dataclean)
 q + stat_summary_bin(
-  aes(y = HH.Lifetime.Giving, x = Sex), 
+  aes(y = HH.Lifetime.Giving, x = sex_simple), 
   fun.y = "mean", geom = "bar")
+
+summary(dataclean$sex_simple)
 
 ```
 
@@ -840,7 +835,7 @@ Linear Model
 
 
 
-mod1lm <- lm( Married_simple ~ Lifetime.Giving,
+mod1lm <- lm( Lifetime.Giving ~ Married_simple,
            data = dataclean)
 
 mod2lm <- lm( Total.Giving.Years ~ Lifetime.Giving,
@@ -992,9 +987,40 @@ library('ggridges')
 summary(data_train$variable)
 
 ggplot(data_train, aes(x = HH.Lifetime.Giving, y = donorseg_fct)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(0, 400)) + 
-      ggtitle("Title")
+      ggtitle("HH Lifetime Giving by Donor Segment")
 
 ```
+
+```{r}
+
+library('corrplot')
+
+#removing ID zip and nonnumeric 
+corrplot_data <- dataclean[-c(1:47,55:56,58:130)]
+
+#Convert from character to numeric data type
+convert_fac2num <- function(x){
+  as.numeric(as.factor(x))
+}
+
+corrplot_data <- mutate_at(corrplot_data,
+                     .vars = c(1:8),
+                     .funs = convert_fac2num)
+#making a matrix
+cd_cor <- cor(corrplot_data)
+
+#creating correlation
+col <- colorRampPalette(c("#BB4400", "#EE9990", 
+  "#FFFFFF", "#77AAEE", "#4477BB"))
+corrplot(cd_cor, method="color", col=col(100),
+  type="lower", addCoef.col = "black",
+  tl.pos="lt", tl.col="black", 
+  tl.cex=0.7, tl.srt=45, 
+  number.cex=0.7,
+  diag=FALSE)
+
+```
+
 
 Random Forest
 
