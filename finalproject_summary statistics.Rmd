@@ -898,12 +898,12 @@ RIDGE
 library('glmnet')
 library('glmnetUtils')
 
-ridge_fit1 <- cv.glmnet(Total.Giving. ~ sex_fct,
+ridge_fit1 <- cv.glmnet(HH.Lifetime.Giving ~ sex_fct + donorseg_fct + No_of_Children,
                        data = data_train,
                        alpha = 0)
 
 #Alpha 0 sets the Ridge
-
+print(ridge_fit1)
 print(ridge_fit1$lambda.min)
 
 print(ridge_fit1$lambda.1se)
@@ -994,7 +994,7 @@ library('ggridges')
 
 summary(data_train$variable)
 
-ggplot(data_train, aes(x = var1, y = var2)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(0, 400)) + 
+ggplot(data_train, aes(x = HH.Lifetime.Giving, y = donorseg_fct)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(0, 400)) + 
       ggtitle("Title")
 
 ```
