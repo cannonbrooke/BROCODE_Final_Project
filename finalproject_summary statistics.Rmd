@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v11
+subtitle: BUS696 Final Project v12
 output:
   html_document:
     df_print: paged
@@ -852,12 +852,22 @@ summary(mod2lm)
 #increasing the giving year one year increase total giving by 0.0035
 
 
+ggplot(data = data_train, aes(x = Age, y = log(HH.Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+      ggtitle("Title")
+
+
+
+ggplot(data = data_train, aes(x = HH.First.Gift.Amount, y = Total.Giving.Years)) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+      ggtitle("Title")
+
+
 ```
 
 
 
 MORE MODELS
 
+Big logistic model
 
 ```{r}
 
@@ -879,14 +889,102 @@ donor_logit2 <-
 
 summary(donor_logit2)
 
+
+
+
+
+
+
+#summary(data_train$major_gifter)
+
 donor_logit3 <-
-  glm(hh.lifetime.giving_fct ~ Married_simple + No_of_Children + Married_simple + Assignment_flag + Total.Giving.Years,
+  glm(major_gifter ~ Married_simple + No_of_Children + Married_simple + Assignment_flag + Total.Giving.Years,
       family = "binomial",
       data = data_train)
 
 summary(donor_logit3)
-#Used to identify the base genre
-#exp(donor_logit1$coefficients)
+exp(donor_logit3$coefficients)
+
+#training predictions for in sample preds 
+preds_train <- predict(donor_logit3, newdata = data_train, type = "response") 
+
+#test predicts for OOS (out of sample)
+preds_test <- predict(donor_logit3, newdata = data_test, type = "response")
+
+head(preds_train)
+head(preds_test)
+
+
+
+results_train <- data.frame(
+  `truth` = data_train   %>% select(major_gifter) %>% 
+    mutate(major_gifter = as.numeric(major_gifter)),
+  `Class1` =  preds_train,
+  `type` = rep("train",length(preds_train))
+)
+
+results_test <- data.frame(
+  `truth` = data_test   %>% select(major_gifter) %>% 
+    mutate(major_gifter = as.numeric(major_gifter)),
+  `Class1` =  preds_test,
+  `type` = rep("test",length(preds_test))
+)
+
+results <- bind_rows(results_train,results_test)
+
+dim(results_train)
+dim(results_test)
+dim(results)
+
+library('plotROC')
+
+p_plot <-
+  ggplot(results,
+         aes(m = Class1, d = major_gifter, color = type)) +
+  geom_roc(labelsize = 2.5,
+           #Took the labelsize down to avoid cutoff
+           cutoffs.at = c(0.7,0.5,0.3,0.1,0)) +
+ #We removed some of the cutoffs to avoid the mashup near the origin.
+
+  #Changed the theme to avoid cutoff plot values.
+  theme_classic(base_size = 14) + 
+  labs(x = "False Positive Rate", 
+       y = "True Positive Rate") +
+      ggtitle("ROC Plot: Training and Test")
+print(p_plot) 
+
+
+p_train <-
+  ggplot(results_train,
+         aes(m = Class1, d = major_gifter, color = type)) +
+  geom_roc(labelsize = 3.5,
+           cutoffs.at = c(0.7,0.5,0.3,0.1,0)) +
+ 
+  theme_minimal(base_size = 16) + 
+  labs(x = "False Positive Rate", 
+       y = "True Positive Rate") +
+      ggtitle("ROC Plot: Training and Test")
+
+p_test <-
+  ggplot(results_test,
+         aes(m = Class1, d = major_gifter, color = type)) +
+  geom_roc(labelsize = 3.5,
+           cutoffs.at = c(0.7,0.5,0.3,0.1,0)) +
+ 
+  theme_minimal(base_size = 16) + 
+  labs(x = "False Positive Rate", 
+       y = "True Positive Rate") +
+      ggtitle("ROC Plot: Training and Test")
+
+#Calculating AUC of both
+print(calc_auc(p_train)$AUC)
+print(calc_auc(p_test)$AUC)
+
+
+
+
+
+
 
 ```
 
@@ -915,16 +1013,22 @@ LASSO
 ```{r}
 
 #Using cv.glmnet from class
+ls(data_train) 
+is.factor(data_train$major_gifter)
 
-lasso_fit <- cv.glmnet(Lifetime.Giving ~ school1_fct + maj1_fct + degree1_fct + donorseg_fct,
+lasso_fit <- cv.glmnet(major_gifter ~ Class.Year + Age + deg1_fct + maj1_fct + sex_fct + Total.Giving.Years,
                        data = data_train,
                        #Alpha 1 for lasso
                        alpha = 1)
 
 print(lasso_fit$lambda.min)
+#
 print(lasso_fit$lambda.1se)
 
 ```
+
+
+
 
 ```{r}
 
