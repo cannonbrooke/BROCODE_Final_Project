@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v12
+subtitle: BUS696 Final Project v13
 output:
   html_document:
     df_print: paged
@@ -360,7 +360,7 @@ dataclean <-
   mutate(sex_fct = 
            fct_explicit_na(Sex),
 sex_simple = 
-    fct_lump_n(Sex, n = 2),
+    fct_lump_n(Sex, n = 4),
 #MARRIED
 married_fct = 
            fct_explicit_na(Married),
@@ -383,27 +383,27 @@ married_fct =
          jobtitle_fct = 
            fct_explicit_na(Job.Title),
          jobtitle_simple = 
-           fct_lump_n(Job.Title, n = 10),
+           fct_lump_n(Job.Title, n = 5),
   #DEGREE TYPE 1
          deg1_fct = 
            fct_explicit_na(Degree.Type.1),
          deg1_simple = 
-           fct_lump_n(Degree.Type.1, n = 10),
+           fct_lump_n(Degree.Type.1, n = 5),
   #DEGREE TYPE 2
          deg2_fct = 
            fct_explicit_na(Degree.Type.2),
          deg2_simple = 
-           fct_lump_n(Degree.Type.2, n = 10),
+           fct_lump_n(Degree.Type.2, n = 5),
   #MAJOR 1
          maj1_fct = 
            fct_explicit_na(Major.1),
          maj1_simple = 
-           fct_lump_n(Major.1, n = 10),
+           fct_lump_n(Major.1, n = 5),
   #MAJOR 2
          maj2_fct = 
            fct_explicit_na(Major.2),
          maj2_simple = 
-           fct_lump_n(Major.2, n = 10),
+           fct_lump_n(Major.2, n = 5),
   #MINOR 1
          min1_fct = 
            fct_explicit_na(Minor.1),
@@ -418,27 +418,27 @@ married_fct =
          school1_fct = 
            fct_explicit_na(School.1),
          school1_simple = 
-           fct_lump_n(School.1, n = 10),
+           fct_lump_n(School.1, n = 5),
   #SCHOOL 2
          school2_fct = 
            fct_explicit_na(School.2),
          school2_simple = 
-           fct_lump_n(School.2, n = 10),
+           fct_lump_n(School.2, n = 5),
   #INSTITUTION TYPE
          insttype_fct = 
            fct_explicit_na(Institution.Type),
          insttype_simple = 
-           fct_lump_n(Institution.Type, n = 4),
+           fct_lump_n(Institution.Type, n = 5),
   #EXTRACURRICULAR
          extra_fct = 
            fct_explicit_na(Extracurricular),
          extra_simple = 
-           fct_lump_n(Extracurricular, n = 10),
+           fct_lump_n(Extracurricular, n = 5),
   #HH FIRST GIFT FUND
          hhfirstgift_fct = 
            fct_explicit_na(HH.First.Gift.Fund),
          hhfirstgift_simple = 
-           fct_lump_n(HH.First.Gift.Fund, n = 10),
+           fct_lump_n(HH.First.Gift.Fund, n = 5),
 #CHILD 1 ENROLL STATUS
          ch1_enroll_fct = 
            fct_explicit_na(Child.1.Enroll.Status),
@@ -857,8 +857,17 @@ ggplot(data = data_train, aes(x = Age, y = log(HH.Lifetime.Giving))) + geom_poin
 
 
 
-ggplot(data = data_train, aes(x = HH.First.Gift.Amount, y = Total.Giving.Years)) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+ggplot(data = data_train, aes(x = Age, y = log(HH.First.Gift.Amount))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
       ggtitle("Title")
+
+#This plot actually has some interesting results
+ggplot(data = data_train, aes(x = Age, y = log(Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~No_of_Children) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+      ggtitle("Title")
+
+
+data_train %>% 
+  select_if(is.factor) %>% 
+  glimpse()
 
 
 ```
@@ -898,7 +907,7 @@ summary(donor_logit2)
 #summary(data_train$major_gifter)
 
 donor_logit3 <-
-  glm(major_gifter ~ Married_simple + No_of_Children + Married_simple + Assignment_flag + Total.Giving.Years,
+  glm(major_gifter ~ Married_simple + No_of_Children + donorseg_simple + Assignment_flag + Total.Giving.Years,
       family = "binomial",
       data = data_train)
 
@@ -1015,8 +1024,16 @@ LASSO
 #Using cv.glmnet from class
 ls(data_train) 
 is.factor(data_train$major_gifter)
+glimpse(data_train$Lifetime.Giving)
 
-lasso_fit <- cv.glmnet(major_gifter ~ Class.Year + Age + deg1_fct + maj1_fct + sex_fct + Total.Giving.Years,
+data_train %>% 
+  select_if(is.factor) %>% 
+  glimpse()
+
+
+library(glmnet)
+library(glmnetUtils)
+lasso_fit <- cv.glmnet(Lifetime.Giving ~ jobtitle_simple + deg1_simple + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple,
                        data = data_train,
                        #Alpha 1 for lasso
                        alpha = 1)
@@ -1025,6 +1042,8 @@ print(lasso_fit$lambda.min)
 #
 print(lasso_fit$lambda.1se)
 
+plot(lasso_fit)
+
 ```
 
 
@@ -1032,12 +1051,12 @@ print(lasso_fit$lambda.1se)
 
 ```{r}
 
-#coef(lasso_mod)
+coef(lasso_fit)
 #Default setting is lambda.1se
 
 #From the book - showing convergence with lambda values
-#plot(lasso_mod$glmnet.fit, xvar="lambda")
-#abline(v=log(c(lasso_mod$lambda.min, lasso_mod$lambda.1se)), lty=2)
+plot(lasso_fit$glmnet.fit, xvar="lambda")
+abline(v=log(c(lasso_fit$lambda.min, lasso_fit$lambda.1se)), lty=2)
 
 ```
 
