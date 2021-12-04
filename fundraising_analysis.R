@@ -29,10 +29,26 @@ dataCleaning <- data %>%
   mutate(ID = as.numeric(ID))
 
 
-donor_data_tidy <- datacleaning %>%
-  mutate(Category.Codes = strsplit(as.character(Category.Codes), "|", fixed = TRUE)) %>%
-  unnest(Category.Codes)
+data_category_split_out <- dataclean %>%
+  mutate(Category.Codes = trim(strsplit(as.character(Category.Codes), "|", fixed = TRUE))) %>%
+  unnest(Category.Codes) %>% pivot_wider(names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
 
 donor_dat_tiday
 
 datacleaning %>% group_by(ID) %>% count() %>% arrange(desc(n))
+
+test <- pivot_wider(data = data_category_split_out,names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
+
+install.packages("stringr")
+library("stringr")
+
+str_split_fixed(dataclean$Category.Codes,"|",2)
+
+pivot_wider(test,names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
+
+
+
+install.packages("gdata")
+library("gdata")
+
+data_category_split_out %>% count(ID)
