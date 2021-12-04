@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v13
+subtitle: BUS696 Final Project v14
 output:
   html_document:
     df_print: paged
@@ -109,7 +109,7 @@ data <- read.csv(here::here("final_project", "donor_data.csv"),
 
 ```{r}
 
-#(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns and adding two fields for assignment and number of children
+#(Birthdate and Age, ID as a number)adding DOB (Age/Spouse Age) in years columns and adding two fields for assignment and number of children and number of degrees
 dataclean <- data %>%
   mutate(Birthdate = ifelse(Birthdate == "0001-01-01", NA, Birthdate)) %>%
   mutate(Birthdate = mdy(Birthdate)) %>%
@@ -121,8 +121,10 @@ dataclean <- data %>%
   mutate(ID = as.numeric(ID)) %>% 
   mutate(Assignment_flag = ifelse(is.na(Assignment.Number), 0,1)) %>% 
   mutate( No_of_Children = ifelse(is.na(Child.1.ID),0,
-                            ifelse(is.na(Child.2.ID),1,2)))
-
+                            ifelse(is.na(Child.2.ID),1,2)))%>%
+ mutate(ID = as.numeric(ID)) %>% 
+    mutate( nmb_degree = ifelse(is.na(Degree.Type.1),0,
+                            ifelse(is.na(Degree.Type.2),1,2)))
 #conferral dates
 dataclean <- dataclean %>%
   
@@ -489,7 +491,6 @@ married_fct =
            fct_explicit_na(Child.2.Feeder.School),
          ch2_feeder_simple = 
            fct_lump_n(Child.2.Feeder.School, n = 4),
-
     )
 
 
@@ -513,6 +514,23 @@ married_fct =
 
 ```
 
+Region Analysis
+
+```{r}
+#grouping by region and analyzing 
+dataclean %>%
+  group_by(region) %>%
+  summarise(Count = length(region),
+            mean_total_giv = mean(HH.Lifetime.Giving)) %>%
+  arrange(-Count) %>%
+  filter(Count >= 100) %>%
+  mutate(mean_total_giv = dollar(mean_total_giv)) %>%
+  kable(col.names = c("Region", "Count", "Mean HH Lifetime Giving"), align=rep('c', 3)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = F)
+  
+
+```
 
 
 DonorSegment Analysis
@@ -526,7 +544,7 @@ dataclean %>%
   arrange(-Count) %>%
   filter(Count >= 100) %>%
   #added scales package to have the values show in dollar 
-  mutate(mean_total_giv = dollar(mean_total_giv)) %>%
+  mutate(mean_total_giv = (dollar(mean_total_giv))) %>%
   kable(col.names = c("Donor Segment", "Count", "Mean HH Lifetime Giving"), align=rep('c', 3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"),
                 full_width = F)
@@ -758,6 +776,7 @@ Split data
 dataclean <- dataclean %>%
       mutate(Married_simple = ifelse(Married == "N",0,1))
 
+
 dataclean <- dataclean %>%
   mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving))
 
@@ -840,29 +859,35 @@ Linear Model
 #These will focus on predicting whether a constituent is a donor or non-donor. 
 
 
-
 mod1lm <- lm( Lifetime.Giving ~ Married_simple,
-           data = dataclean)
+           data = data_train)
 
 mod2lm <- lm( Total.Giving.Years ~ Lifetime.Giving,
-           data = dataclean)
+           data = data_train)
+
+mod3lm <- lm( Lifetime.Giving ~ region,
+           data = data_train)
 
 summary(mod1lm)
 summary(mod2lm)
+summary(mod3lm)
 #increasing the giving year one year increase total giving by 0.0035
 
 
-ggplot(data = data_train, aes(x = Age, y = log(HH.Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
-      ggtitle("Title")
+ggplot(data = data_train, aes(x = Age, y = log(HH.Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~region) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+      ggtitle("Region")
 
+
+ggplot(data = data_train, aes(x = Age, y = log(HH.Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~nmb_degree) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
+      ggtitle("Number of Degrees")
 
 
 ggplot(data = data_train, aes(x = Age, y = log(HH.First.Gift.Amount))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~donorseg_fct) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
-      ggtitle("Title")
+      ggtitle("Donor Segment")
 
 #This plot actually has some interesting results
 ggplot(data = data_train, aes(x = Age, y = log(Lifetime.Giving))) + geom_point(alpha = 1/10) + geom_smooth(method = lm) + facet_wrap(~No_of_Children) + theme_clean(base_size = 8) + labs(x = "X", y = "Y") +
-      ggtitle("Title")
+      ggtitle("# Children")
 
 
 data_train %>% 
@@ -1033,10 +1058,11 @@ data_train %>%
 
 library(glmnet)
 library(glmnetUtils)
-lasso_fit <- cv.glmnet(Lifetime.Giving ~ jobtitle_simple + deg1_simple + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple,
+lasso_fit <- cv.glmnet(Lifetime.Giving ~ jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple,
                        data = data_train,
                        #Alpha 1 for lasso
                        alpha = 1)
+
 
 print(lasso_fit$lambda.min)
 #
@@ -1125,7 +1151,7 @@ ggplot(data_train, aes(x = HH.Lifetime.Giving, y = donorseg_fct)) + geom_density
 library('corrplot')
 
 #removing ID zip and nonnumeric 
-corrplot_data <- dataclean[-c(1:47,55:56,58:130)]
+corrplot_data <- dataclean[-c(1:48,52:56,58:60,63,66:67,70:72,74:81,83:132)]
 
 #Convert from character to numeric data type
 convert_fac2num <- function(x){
@@ -1133,7 +1159,7 @@ convert_fac2num <- function(x){
 }
 
 corrplot_data <- mutate_at(corrplot_data,
-                     .vars = c(1:8),
+                     .vars = c(1:12),
                      .funs = convert_fac2num)
 #making a matrix
 cd_cor <- cor(corrplot_data)
@@ -1148,6 +1174,19 @@ corrplot(cd_cor, method="color", col=col(100),
   number.cex=0.7,
   diag=FALSE)
 
+#correlation matrix
+# pairs(~Age + Months.Since.Last.Gift + donorseg_fct + 
+#     nmb_degree + No_of_Children + HH.First.Gift.Age + HH.First.Gift.Amount + Total.Giving.Years,
+#     col = corrplot_data$HH.Lifetime.Giving,
+#     data = corrplot_data, 
+#     main = "Donor Scatter Plot Matrix")
+
+#worthless.. 
+
+ggplot(data = corrplot_data, aes(x = nmb_degree, y = HH.Lifetime.Giving)) + 
+  geom_point(aplha = 1/10)+
+  geom_smooth(method = "lm", color ="red") 
+
 ```
 
 
@@ -1157,7 +1196,7 @@ Random Forest
 
 library('randomForest')
 
-rf_fit_donor <- randomForest(dependent ~ ., 
+rf_fit_donor <- randomForest(Lifetime.Giving ~ ., 
                        data = data_train,
                        type = classification,
                        mtry = 7,
