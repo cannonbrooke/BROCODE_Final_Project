@@ -142,6 +142,12 @@ dataclean <- dataclean %>%
   mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date)) %>%
 mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, end=Sys.Date())/duration(n=1, unit="years"))))
 
+#major gift 
+dataclean <- 
+  dataclean %>% 
+  mutate(major_gifter = ifelse(Lifetime.Giving > 50000, 1,0) %>% factor(., levels = c("0","1")))
+
+
 #splitting up the age into ranges and creating category for easy visualization 
 dataclean <- dataclean %>%
   mutate(age_range = 
