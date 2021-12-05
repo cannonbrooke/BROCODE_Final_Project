@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v14.333 (repeating of course)"
+subtitle: "BUS696 Final Project v15"
 output:
   html_document:
     df_print: paged
@@ -124,10 +124,8 @@ dataclean <- data %>%
                             ifelse(is.na(Child.2.ID),1,2)))%>%
  mutate(ID = as.numeric(ID)) %>% 
     mutate( nmb_degree = ifelse(is.na(Degree.Type.1),0,
-                            ifelse(is.na(Degree.Type.2),1,2)))
+                            ifelse(is.na(Degree.Type.2),1,2))) %>%
 #conferral dates
-dataclean <- dataclean %>%
-  
   mutate(Conferral.Date.1 = ifelse(Conferral.Date.1 == "0001-01-01", NA, Conferral.Date.1)) %>%
   mutate(Conferral.Date.1 = mdy(Conferral.Date.1)) %>%
   mutate(Conferral.Date.1.Age = as.numeric(floor(interval(start= Conferral.Date.1, end=Sys.Date())/duration(n=1, unit="years")))) %>%
@@ -142,16 +140,10 @@ dataclean <- dataclean %>%
   
  mutate(HH.First.Gift.Date = ifelse(HH.First.Gift.Date == "0001-01-01", NA, HH.First.Gift.Date)) %>%
   mutate(HH.First.Gift.Date = mdy(HH.First.Gift.Date)) %>%
-mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, end=Sys.Date())/duration(n=1, unit="years"))))
-
+mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, end=Sys.Date())/duration(n=1, unit="years")))) %>% 
 #major gift 
-dataclean <- 
-  dataclean %>% 
-  mutate(major_gifter = ifelse(Lifetime.Giving > 50000, 1,0) %>% factor(., levels = c("0","1")))
-
-
+  mutate(major_gifter = ifelse(Lifetime.Giving > 50000, 1,0) %>% factor(., levels = c("0","1"))) %>%
 #splitting up the age into ranges and creating category for easy visualization 
-dataclean <- dataclean %>%
   mutate(age_range = 
     ifelse(Age %in% 10:19, "10 < 20 years old",
     ifelse(Age %in% 20:29, "20 < 30 years old", 
@@ -162,16 +154,8 @@ dataclean <- dataclean %>%
     ifelse(Age %in% 70:79, "70 < 80 years old",
     ifelse(Age %in% 80:89, "80 < 90 years old",
     ifelse(Age %in% 90:120, "90+ years old",
-    NA))))))))))
-
-
-#seeing what we have
-table(dataclean$age_range)
-#50-60 is the most common age range 
-
+    NA)))))))))) %>%
 #creating a region column using the county data and the OMB MSA (Metropolitan Statistical Area) definitions
-
-dataclean <- dataclean %>%
   mutate(region = 
     ifelse(County == "San Luis Obispo" & State == "CA", "So Cal",
     ifelse(County == "Kern" & State == "CA", "So Cal",
@@ -214,9 +198,7 @@ dataclean <- dataclean %>%
     ifelse(County == "Santa Cruz" & State == "CA", "Bay Area",
     ifelse(County == "Solano" & State == "CA", "Bay Area",
     ifelse(County == "Sonoma" & State == "CA", "Bay Area",
-           NA))))))))))))))))))))))))))))))))))))))))))
-
-dataclean <- dataclean %>%
+           NA)))))))))))))))))))))))))))))))))))))))))) %>%
   mutate(region = 
     ifelse(County == "Kings" & State == "NY", "New York",
     ifelse(County == "Queens" & State == "NY", "New York",
@@ -241,17 +223,13 @@ dataclean <- dataclean %>%
     ifelse(County == "Sussex" & State == "NJ", "New York",
     ifelse(County == "Hunterdon" & State == "NJ", "New York",
     ifelse(County == "Pike" & State == "NJ", "New York",
-    region))))))))))))))))))))))))
-
+    region)))))))))))))))))))))))) %>%
 
 # code nor cal region as all others in CA not already defined
-
-dataclean <- dataclean %>%
   mutate(region = 
     ifelse(State == "CA" & is.na(region) == TRUE, "Nor Cal", region))
 
-
-#Removing Columns that provide no benefit 
+#Initial Removal of Columns that provide no benefit 
 
 dataclean <- subset(dataclean,select = -c(Assignment.Number
                                                     ,Assignment.has.Historical.Mngr
@@ -296,10 +274,8 @@ zip <- read.csv(here::here("final_project", "Salary_Zipcode.csv"),
 
 #adding zip salary column
 dataclean <-dataclean %>%
-    mutate(zipcode_slry = VLOOKUP(Zip, zip, NAME, S1902_C03_002E))
-
+    mutate(zipcode_slry = VLOOKUP(Zip, zip, NAME, S1902_C03_002E)) %>%
 #slry range 
-dataclean <- dataclean %>%
   mutate(zipslry_range = 
     ifelse(zipcode_slry %in% 10000:89999, "90K-99K",
     ifelse(zipcode_slry %in% 90000:99999, "90K-99K",
@@ -343,10 +319,9 @@ dataclean = subset(dataclean, select = -c(scholarship))
 dataclean %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 #removing duplicated records
-
 dataclean <- unique(dataclean)
 
-#n = 1 no ID with multiple records cleaned of dupes
+#Verifying n = 1 no ID with multiple records cleaned of dupes
 dataclean %>% group_by(ID) %>% count() %>% arrange(desc(n))
 
 ```
@@ -619,7 +594,7 @@ glimpse(age_range_giving)
 
 
 
-## Part 2
+## Part 2 - Summary Statistics
 
 2a) Plotting average giving by age range 
 
@@ -633,7 +608,8 @@ age_range_giving <-
 ggplot(age_range_giving, aes(age_range, avg_giving)) +
   geom_bar(stat = "identity")+
   theme(axis.text.x = element_text(angle=45,
-                                        hjust=1))
+                                        hjust=1)) + labs(x = "Age Range", y = "Average Giving") +
+      ggtitle("Average Giving Compared Across Age Ranges")
 
 
 ```
@@ -663,7 +639,8 @@ ggplot(dataclean, aes(age_range,HH.Lifetime.Giving,fill = age_range)) +
   geom_boxplot(
   outlier.colour = "red") + 
   scale_y_log10() +
-  theme(axis.text.x=element_text(angle=45,hjust=1))
+  theme(axis.text.x=element_text(angle=45,hjust=1))  + labs(x = "Age Range", y = "Lifetime Giving Amount") +
+      ggtitle("Lifetime Giving Compared Across Age Ranges")
   
 
 ```
@@ -686,8 +663,8 @@ dataclean %>%
   
 
 ```
-Giving by gender
 
+Giving by gender
 
 ```{r}
 
@@ -706,7 +683,6 @@ summary(dataclean$sex_simple)
 ```
 
 Mean age by gender
-
 
 ```{r}
 #breakdown of sexs 
@@ -741,10 +717,6 @@ tally(group_by(dataclean, Sex, age_range))
   kable_styling(bootstrap_options = c("condensed"),
                 full_width = F)
   
- 
-  
-  
-
 
 ```
 
@@ -771,14 +743,11 @@ nd %>%
 
 
 
-## Modeling for you 
+## Part 3 - Modeling
 
-Split data
+Split data and create a new set for easier analysis
 
 ``` {r}
-
-
-
 
 #converting married Y and N to 1 and 0 
 dataclean <- dataclean %>%
@@ -790,9 +759,42 @@ dataclean <- dataclean %>%
   mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1))
 
 
+
+#Creating the velvet set - only the best can enter
+
+datavelvet <- subset(dataclean,select = -c(
+  Category.Codes,
+  Category.Descriptions,
+  Contact.Rules,
+  County,
+  Degree.Type.1,
+  Degree.Type.2,
+  Donor.Segment,
+  Conferral.Date.1,
+  Conferral.Date.2,
+  Contact.Rules,
+  Degree.Type.1,
+  Degree.Type.2,
+  Extracurricular,
+  HH.First.Gift.Fund,
+  ID,
+  Institution.Type,
+  Job.Title,
+  Last.Contact.By.Anyone,
+  Major.1,
+  Major.2,
+  School.1,
+  School.2,
+  Spouse.Birthdate,
+  Spouse.Mail.Rules,
+  Zip
+))
+
+
+
 library("rsample")
 
-data_split <- initial_split(dataclean, prop = 0.75)
+data_split <- initial_split(datavelvet, prop = 0.75)
 
 data_train <- training(data_split)
 data_test <- testing(data_split)
@@ -802,7 +804,7 @@ data_test <- testing(data_split)
 
 
 ```{r}
-p <- dataclean %>%
+p <- datavelvet %>%
   ggplot(aes(Age)) + geom_histogram(bins=30, fill = "blue") + theme_economist_white() +
   ggtitle("Overall Donor Age Distribution") + 
   xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(5,100,by = 20)) +
@@ -812,7 +814,7 @@ ggplotly(p)
   
 p
 
-ggplot(data = dataclean, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
+ggplot(data = datavelvet, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
 
   
 
@@ -824,7 +826,7 @@ Another Histogram
 
 ```{r}
 
-dataclean %>%
+datavelvet %>%
   filter(Age >= 10) %>%
   filter(Age <= 90) %>%
   ggplot(aes(Age)) + geom_histogram(fill = "#002845", bins = 20) + theme_economist_white() +
@@ -837,7 +839,7 @@ Age distribution by gender
 
 ```{r}
 #Age Gender filtered out below 15 and above 90 - also removed U X the weird values 
-dataclean %>%
+datavelvet %>%
   filter(Age >= 15) %>%
   filter(Age <= 90) %>%
   mutate(Sex = as.factor(Sex)) %>%
@@ -853,7 +855,7 @@ Donor age distribution by marital status
 
 ```{r}
 #Age Marital Status
-dataclean %>%
+datavelvet %>%
   filter(Age >= 20) %>%
   filter(Age <= 85) %>%
   ggplot(aes(Age, fill = Married)) + geom_histogram(bins = 25) + theme_economist_white() +
@@ -933,9 +935,11 @@ donor_logit2 <-
 summary(donor_logit2)
 
 
+```
 
 
 
+```{r log}
 
 
 #summary(data_train$major_gifter)
@@ -1020,16 +1024,17 @@ p_test <-
        y = "True Positive Rate") +
       ggtitle("ROC Plot: Training and Test")
 
+```
+
+```{r}
+
+#summary(donor_logit3)
+#coef(donor_logit3)
+
+
 #Calculating AUC of both
 print(calc_auc(p_train)$AUC)
 print(calc_auc(p_test)$AUC)
-
-
-
-summary(donor_logit3)
-coef(donor_logit3)
-
-
 ```
 
 RIDGE
@@ -1051,6 +1056,29 @@ print(ridge_fit1$lambda.1se)
 plot(ridge_fit1)
 
 ```
+
+BIG RIDGE
+
+```{r}
+
+library('glmnet')
+library('glmnetUtils')
+
+data_train %>% map(levels) %>% map(length)
+
+ridge_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ .,
+                       data = data_train,
+                       alpha = 0)
+
+#Alpha 0 sets the Ridge
+print(ridge_fit2)
+print(ridge_fit2$lambda.min)
+
+print(ridge_fit2$lambda.1se)
+plot(ridge_fit2)
+
+```
+
 
 LASSO
 
