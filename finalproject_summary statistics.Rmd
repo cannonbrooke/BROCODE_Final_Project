@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v14.2
+subtitle: "BUS696 Final Project v14.333 (repeating of course)"
 output:
   html_document:
     df_print: paged
@@ -776,13 +776,18 @@ nd %>%
 Split data
 
 ``` {r}
+
+
+
+
 #converting married Y and N to 1 and 0 
 dataclean <- dataclean %>%
       mutate(Married_simple = ifelse(Married == "N",0,1))
 
 
 dataclean <- dataclean %>%
-  mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving))
+  mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving)) %>%
+  mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1))
 
 
 library("rsample")
@@ -934,9 +939,10 @@ summary(donor_logit2)
 
 
 #summary(data_train$major_gifter)
+#Assignment_flag taken out - may add back
 
 donor_logit3 <-
-  glm(major_gifter ~ Married_simple + No_of_Children + donorseg_simple + Assignment_flag + Total.Giving.Years,
+  glm(major_gifter ~ Married + No_of_Children + donorseg_simple +  Total.Giving.Years + nmb_degree,
       family = "binomial",
       data = data_train)
 
@@ -1020,8 +1026,8 @@ print(calc_auc(p_test)$AUC)
 
 
 
-
-
+summary(donor_logit3)
+coef(donor_logit3)
 
 
 ```
@@ -1033,7 +1039,7 @@ RIDGE
 library('glmnet')
 library('glmnetUtils')
 
-ridge_fit1 <- cv.glmnet(HH.Lifetime.Giving ~ sex_fct + donorseg_fct + No_of_Children,
+ridge_fit1 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + donorseg_fct + No_of_Children,
                        data = data_train,
                        alpha = 0)
 
@@ -1042,7 +1048,7 @@ print(ridge_fit1)
 print(ridge_fit1$lambda.min)
 
 print(ridge_fit1$lambda.1se)
-
+plot(ridge_fit1)
 
 ```
 
@@ -1051,18 +1057,19 @@ LASSO
 ```{r}
 
 #Using cv.glmnet from class
-ls(data_train) 
-is.factor(data_train$major_gifter)
-glimpse(data_train$Lifetime.Giving)
+#ls(data_train) 
+#is.factor(data_train$major_gifter)
+#glimpse(data_train$Lifetime.Giving)
 
-data_train %>% 
-  select_if(is.factor) %>% 
-  glimpse()
+#data_train %>% 
+#  select_if(is.factor) %>% 
+#  glimpse()
+
 
 
 library(glmnet)
 library(glmnetUtils)
-lasso_fit <- cv.glmnet(Lifetime.Giving ~ jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple,
+lasso_fit <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple + No_of_Children + Married,
                        data = data_train,
                        #Alpha 1 for lasso
                        alpha = 1)
@@ -1086,18 +1093,22 @@ coef(lasso_fit)
 
 #From the book - showing convergence with lambda values
 plot(lasso_fit$glmnet.fit, xvar="lambda")
-abline(v=log(c(lasso_fit$lambda.min, lasso_fit$lambda.1se)), lty=2)
+#abline(v=log(c(lasso_fit$lambda.min, lasso_fit$lambda.1se)), lty=2)
 
 ```
 
+
+
+
+
 ```{r}
 
-#enet_mod <- cva.glmnet(dependent ~ indy1 + indy2,
-#                       data = data,
-#                       alpha = seq(0,1, by = 0.1))
+enet_mod <- cva.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple + No_of_Children + Married,
+                       data = data_train,
+                       alpha = seq(0,1, by = 0.1))
 
-#print(enet_mod)
-#plot(enet_mod)
+print(enet_mod)
+plot(enet_mod)
 
 
 ```
@@ -1134,6 +1145,7 @@ best_mod <- enet_mod$modlist[[which(enet_mod$alpha == best_alpha)]]
 
 print(best_mod)
 
+minlossplot(enet_mod, cv.type = "min")
 
 ```
 
@@ -1145,8 +1157,8 @@ library('ggridges')
 
 summary(data_train$variable)
 
-ggplot(data_train, aes(x = HH.Lifetime.Giving, y = donorseg_fct)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(0, 400)) + 
-      ggtitle("HH Lifetime Giving by Donor Segment")
+ggplot(data_train, aes(x = HH.Lifetime.Giving, y = region)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(25000, 100000)) + 
+      ggtitle("HH Lifetime Giving by Region")
 
 ```
 
