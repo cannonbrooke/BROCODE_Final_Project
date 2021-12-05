@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: BUS696 Final Project v14.1
+subtitle: BUS696 Final Project v14.2
 output:
   html_document:
     df_print: paged
@@ -691,12 +691,16 @@ Giving by gender
 
 ```{r}
 
-#remove NAs U X 
-q <- ggplot(dataclean)
-q + stat_summary_bin(
-  aes(y = HH.Lifetime.Giving, x = sex_simple), 
-  fun.y = "mean", geom = "bar")
+#remove NAs U X
 
+dataclean2 <- dataclean %>%
+  filter(Sex %in% c("M", "F")) 
+
+q <- ggplot(dataclean2) 
+q + stat_summary_bin(
+  aes(y = HH.Lifetime.Giving, x = Sex), 
+  fun.y = "mean", geom = "bar") 
+  
 summary(dataclean$sex_simple)
 
 ```
