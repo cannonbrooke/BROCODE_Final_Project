@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v16"
+subtitle: "BUS696 Final Project v17"
 output:
   html_document:
     df_print: paged
@@ -780,6 +780,15 @@ datavelvet <- subset(dataclean,select = -c(
   Child.2.Minor,
   Child.2.School,
   Child.2.Feeder.School,
+  ch1_enroll_fct,
+  ch1_maj_fct,
+  ch1_min_fct,
+  ch1_school_fct,
+  ch1_feeder_fct,
+  ch2_school_fct,
+  ch2_feeder_fct,
+  ch2_maj_fct,
+  ch2_min_fct,
   Contact.Rules,
   Degree.Type.1,
   Degree.Type.2,
@@ -789,29 +798,45 @@ datavelvet <- subset(dataclean,select = -c(
   Conferral.Date.1,
   Conferral.Date.2,
   Contact.Rules,
+  contact_fct,
   Degree.Type.1,
   Degree.Type.2,
+  deg1_fct,
+  deg2_fct,
+  donorseg_fct,
   Extracurricular,
+  extra_fct,
   HH.First.Gift.Fund,
   HH.First.Gift.Date,
+  hhfirstgift_fct,
+  hh.lifetime.giving_fct,
   ID,
   Institution.Type,
+  insttype_fct,
   Job.Title,
+  jobtitle_fct,
   Last.Contact.By.Anyone,
   LegacyLeader..compass.score.,
-  Married,
+  major_gifter,
   Major.1,
   Major.2,
   Minor.1,
   Minor.2,
+  maj1_fct,
+  maj2_fct,
+  min1_fct,
+  min2_fct,
   region,
   zipcode_slry,
   Sex,
   Scholarship,
   School.1,
   School.2,
+  school1_fct,
+  school2_fct,
   Spouse.Birthdate,
   Spouse.Mail.Rules,
+  spomail_fct,
   State,
   Zip,
   zipslry_range
@@ -1095,7 +1120,7 @@ library('glmnetUtils')
 
 data_train %>% map(levels) %>% map(length)
 
-ridge_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ .,
+ridge_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ Age + school1_simple + insttype_simple + extra_simple + ch1_maj_simple + ch2_maj_simple  + Married_simple + donorseg_simple + married_fct + sex_simple + nmb_degree,
                        data = data_train,
                        alpha = 0)
 
@@ -1140,16 +1165,35 @@ plot(lasso_fit)
 
 ```
 
+LASSO 2
 
+```{r}
+
+
+library(glmnet)
+library(glmnetUtils)
+lasso_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + Age + school1_simple + insttype_simple + extra_simple + Married + donorseg_simple + nmb_degree + No_of_Children + jobtitle_simple,
+                       data = data_train,
+                       #Alpha 1 for lasso
+                       alpha = 1)
+
+
+print(lasso_fit2$lambda.min)
+#
+print(lasso_fit2$lambda.1se)
+
+plot(lasso_fit2)
+
+```
 
 
 ```{r}
 
-coef(lasso_fit)
+coef(lasso_fit2)
 #Default setting is lambda.1se
 
 #From the book - showing convergence with lambda values
-plot(lasso_fit$glmnet.fit, xvar="lambda")
+plot(lasso_fit2$glmnet.fit, xvar="lambda")
 #abline(v=log(c(lasso_fit$lambda.min, lasso_fit$lambda.1se)), lty=2)
 
 ```
