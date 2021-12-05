@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v15"
+subtitle: "BUS696 Final Project v16"
 output:
   html_document:
     df_print: paged
@@ -763,13 +763,29 @@ dataclean <- dataclean %>%
 #Creating the velvet set - only the best can enter
 
 datavelvet <- subset(dataclean,select = -c(
+  age_range,
+  Athletics,
+  Birthdate,
   Category.Codes,
   Category.Descriptions,
+  Child.1.Enroll.Status,
+  Child.1.ID,
+  Child.2.ID,
+  Child.1.Major,
+  Child.1.Minor,
+  Child.1.School,
+  Child.1.Feeder.School,
+  Child.2.Enroll.Status,
+  Child.2.Major,
+  Child.2.Minor,
+  Child.2.School,
+  Child.2.Feeder.School,
   Contact.Rules,
-  County,
   Degree.Type.1,
   Degree.Type.2,
   Donor.Segment,
+  City,
+  County,
   Conferral.Date.1,
   Conferral.Date.2,
   Contact.Rules,
@@ -777,20 +793,33 @@ datavelvet <- subset(dataclean,select = -c(
   Degree.Type.2,
   Extracurricular,
   HH.First.Gift.Fund,
+  HH.First.Gift.Date,
   ID,
   Institution.Type,
   Job.Title,
   Last.Contact.By.Anyone,
+  LegacyLeader..compass.score.,
+  Married,
   Major.1,
   Major.2,
+  Minor.1,
+  Minor.2,
+  region,
+  zipcode_slry,
+  Sex,
+  Scholarship,
   School.1,
   School.2,
   Spouse.Birthdate,
   Spouse.Mail.Rules,
-  Zip
+  State,
+  Zip,
+  zipslry_range
 ))
 
-
+#datavelvet <-
+#datavelvet[sapply(datavelvet, is.character)] <- #lapply(datavelvet[sapply(datavelvet, is.character)], 
+#                                                           as.factor)
 
 library("rsample")
 
