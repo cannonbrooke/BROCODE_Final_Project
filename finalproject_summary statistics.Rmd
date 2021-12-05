@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v17"
+subtitle: "BUS696 Final Project v18"
 output:
   html_document:
     df_print: paged
@@ -1120,7 +1120,7 @@ library('glmnetUtils')
 
 data_train %>% map(levels) %>% map(length)
 
-ridge_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ Age + school1_simple + insttype_simple + extra_simple + ch1_maj_simple + ch2_maj_simple  + Married_simple + donorseg_simple + married_fct + sex_simple + nmb_degree,
+ridge_fit2 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + Age + school1_simple + insttype_simple + extra_simple + Married + donorseg_simple + nmb_degree + No_of_Children + jobtitle_simple,
                        data = data_train,
                        alpha = 0)
 
@@ -1130,6 +1130,12 @@ print(ridge_fit2$lambda.min)
 
 print(ridge_fit2$lambda.1se)
 plot(ridge_fit2)
+
+ridge_coefs <- data.frame(
+'ridge_min' = coef(ridge_fit2, s = ridge_fit2$lambda.min) %>% round(3) %>% as.matrix() %>% as.data.frame(),
+'ridge_1se' = coef(ridge_fit2, s = ridge_fit2$lambda.1se) %>% round(3) %>% as.matrix() %>% as.data.frame()
+) %>% rename('ridge_min' = 1, 'ridge_1se' = 2)
+ridge_coefs
 
 ```
 
