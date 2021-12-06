@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v19"
+subtitle: "BUS696 Final Project v20"
 output:
   html_document:
     df_print: paged
@@ -78,6 +78,7 @@ library('plotly')
 library('tidyquant')
 library('scales')
 library("gdata")
+library("urbnmapr")
 
 # note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
 
@@ -228,6 +229,17 @@ mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, 
 # code nor cal region as all others in CA not already defined
   mutate(region = 
     ifelse(State == "CA" & is.na(region) == TRUE, "Nor Cal", region))
+
+#add county after county name in order to use Urbnmapr
+
+dataclean <- data %>%
+  mutate(County =
+      ifelse(is.na(County) == TRUE, County, paste0(County, " County"))) %>% 
+    mutate(county_name = County) %>% 
+    mutate(state_abbv = State)
+
+#countymap_data <- left_join(dataclean, counties, by = c('state_abbv','county_name'))
+
 
 #Initial Removal of Columns that provide no benefit 
 
@@ -761,7 +773,7 @@ Another Histogram
 
 ```{r}
 
-datavelvet %>%
+dataclean %>%
   filter(Age >= 10) %>%
   filter(Age <= 90) %>%
   ggplot(aes(Age)) + geom_histogram(fill = "#002845", bins = 20) + theme_economist_white() +
@@ -775,7 +787,7 @@ Age distribution by gender
 
 ```{r}
 #Age Gender filtered out below 15 and above 90 - also removed U X the weird values 
-datavelvet %>%
+dataclean %>%
   filter(Age >= 15) %>%
   filter(Age <= 90) %>%
   mutate(Sex = as.factor(Sex)) %>%
@@ -791,7 +803,7 @@ Donor age distribution by marital status
 
 ```{r}
 #Age Marital Status
-datavelvet %>%
+dataclean %>%
   filter(Age >= 20) %>%
   filter(Age <= 85) %>%
   ggplot(aes(Age, fill = Married)) + geom_histogram(bins = 25) + theme_economist_white() +
@@ -908,7 +920,7 @@ datavelvet <- subset(dataclean,select = -c(
 
 library("rsample")
 
-data_split <- initial_split(datavelvet, prop = 0.75)
+data_split <- initial_split(dataclean, prop = 0.75)
 
 data_train <- training(data_split)
 data_test <- testing(data_split)
