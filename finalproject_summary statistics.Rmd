@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v20"
+subtitle: "BUS696 Final Project v21"
 output:
   html_document:
     df_print: paged
@@ -79,6 +79,13 @@ library('tidyquant')
 library('scales')
 library("gdata")
 library("urbnmapr")
+library("usmap")
+library("usdata")
+library("tidycensus")
+library("urbnthemes")
+
+#install.packages("remotes")
+#remotes::install_github("UrbanInstitute/urbnthemes", build_vignettes = TRUE)
 
 # note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
 
@@ -230,15 +237,8 @@ mutate(HH.First.Gift.Age = as.numeric(floor(interval(start= HH.First.Gift.Date, 
   mutate(region = 
     ifelse(State == "CA" & is.na(region) == TRUE, "Nor Cal", region))
 
-#add county after county name in order to use Urbnmapr
 
-dataclean <- data %>%
-  mutate(County =
-      ifelse(is.na(County) == TRUE, County, paste0(County, " County"))) %>% 
-    mutate(county_name = County) %>% 
-    mutate(state_abbv = State)
 
-#countymap_data <- left_join(dataclean, counties, by = c('state_abbv','county_name'))
 
 
 #Initial Removal of Columns that provide no benefit 
@@ -497,6 +497,54 @@ married_fct =
 
 #creating a table against Sex column 
 #table(dataclean$sex_fct, dataclean$sex_simple)
+
+#add county after county name in order to use Urbnmapr
+
+dataclean <- dataclean %>%
+  mutate(County =
+      ifelse(is.na(County) == TRUE, County, paste0(County, " County"))) 
+    
+dc_state_county <- dataclean %>%
+  mutate(polyname =
+      ifelse(is.na(County) == TRUE, County, paste0(State, ",",County)))
+
+dc_state_county2 <- fips_codes %>%
+  mutate(polyname = paste0(state, ",",county)) %>% 
+  mutate(county_fips = paste0(state_code,county_code))
+
+
+countymap_data <- left_join(dc_state_county, dc_state_county2, by = "polyname")
+
+
+spatial_data <- left_join(get_urbn_map(map = "counties", sf = TRUE),
+                          countymap_data,
+                          by = "county_fips")
+ggplot() +
+  geom_sf(spatial_data,
+          mapping = aes(fill = HH.Lifetime.Giving),
+          color = "#ffffff", size = 0.50) +
+  labs(fill = "Household Lifetime Giving")
+
+county_sf <- get_urbn_map(map = "counties", sf = TRUE)
+
+county_sf %>% 
+  left_join(countymap_data, by = "county_fips") %>% 
+  ggplot() +
+  geom_sf(mapping = aes(fill = HH.Lifetime.Giving),
+          color = "#ffffff", size = 0.25) +
+  theme_economist_white() +
+  scale_fill_gradient(low = ("lightblue"),high = ("blue"),labels = scales::dollar) +
+  labs(fill = "Household Lifetime Giving") +
+  coord_sf(datum = NA)
+
+spatial_data %>% 
+    filter(state_name.x == "California") %>%
+  ggplot() +
+    geom_sf(mapping = aes(fill = HH.Lifetime.Giving),
+                 color = "#ffffff", size = 0.05) +
+     coord_sf(datum = NA) +
+    scale_fill_gradient(low = ("lightblue"),high = ("blue"),labels = scales::dollar,na.value = "transparent") +
+  labs(fill = "Household Lifetime Giving")
 
 
 ```
