@@ -1,7 +1,7 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v18"
+subtitle: "BUS696 Final Project v19"
 output:
   html_document:
     df_print: paged
@@ -489,6 +489,10 @@ married_fct =
 
 ```
 
+
+## Part 2 - Summary Statistics
+
+
 Region Analysis
 
 ```{r}
@@ -527,7 +531,8 @@ dataclean %>%
 
 ```
 
-First gift size 
+First gift size analysis
+
 ```{r}
 aq <- quantile(dataclean$HH.First.Gift.Amount, probs = c(.25,.50,.75,.9,.99), na.rm = TRUE)
 
@@ -542,7 +547,9 @@ aq %>%
   
 
 ```
+
 Consecutive giving
+
 ```{r}
 #consecutive years of giving 
 dataclean %>%
@@ -590,14 +597,7 @@ glimpse(age_range_giving)
 
 ```
 
-
-
-
-
-## Part 2 - Summary Statistics
-
-2a) Plotting average giving by age range 
-
+Plotting average giving by age range 
 
 ```{r}
 
@@ -615,8 +615,7 @@ ggplot(age_range_giving, aes(age_range, avg_giving)) +
 ```
 
 
-2b) Count of donors based on age range (another way to look at it)
-
+Count of donors based on age range (another way to look at it)
 
 ```{r}
 
@@ -630,8 +629,7 @@ ggplot(dataclean,
 
 ```
 
-2c) Boxplot of the Age Ranges Against the Lifetime Giving Amounts with a log scale applied - the reason we applied log scale is to resolve issues with visualizations that skew towards large values in our dataset. 
-
+Boxplot of the Age Ranges Against the Lifetime Giving Amounts with a log scale applied - the reason we applied log scale is to resolve issues with visualizations that skew towards large values in our dataset. 
 
 ```{r}
 
@@ -646,7 +644,6 @@ ggplot(dataclean, aes(age_range,HH.Lifetime.Giving,fill = age_range)) +
 ```
 
 2d) Splitting by age and gender 
-
 
 ```{r}
 
@@ -741,11 +738,74 @@ nd %>%
 
 ```
 
+```{r}
+p <- dataclean %>%
+  ggplot(aes(Age)) + geom_histogram(bins=30, fill = "blue") + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(5,100,by = 20)) +
+  scale_y_continuous(breaks = seq(20,100,by = 20)) + xlim(c(20,100))
+
+ggplotly(p)
+  
+p
+
+ggplot(data = dataclean, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
+
+  
+
+
+```
+
+Another Histogram
+
+
+```{r}
+
+datavelvet %>%
+  filter(Age >= 10) %>%
+  filter(Age <= 90) %>%
+  ggplot(aes(Age)) + geom_histogram(fill = "#002845", bins = 20) + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,10000000,2000)) 
+
+```
+
+Age distribution by gender 
+
+```{r}
+#Age Gender filtered out below 15 and above 90 - also removed U X the weird values 
+datavelvet %>%
+  filter(Age >= 15) %>%
+  filter(Age <= 90) %>%
+  mutate(Sex = as.factor(Sex)) %>%
+  filter(Sex != "U") %>%
+  filter(Sex != "X") %>%
+  ggplot(aes(Age, fill = Sex)) + geom_histogram(bins = 25) + theme_economist_white() +
+  ggtitle("Age Distribution by Gender") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,10)) +
+  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
+```
+
+Donor age distribution by marital status 
+
+```{r}
+#Age Marital Status
+datavelvet %>%
+  filter(Age >= 20) %>%
+  filter(Age <= 85) %>%
+  ggplot(aes(Age, fill = Married)) + geom_histogram(bins = 25) + theme_economist_white() +
+  ggtitle("Overall Donor Age Distribution by Marital Status") + 
+  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
+```
+
+
 
 
 ## Part 3 - Modeling
 
-Split data and create a new set for easier analysis
+Splitting data and creating a new set for easier analysis
 
 ``` {r}
 
@@ -857,68 +917,7 @@ data_test <- testing(data_split)
 
 
 
-```{r}
-p <- datavelvet %>%
-  ggplot(aes(Age)) + geom_histogram(bins=30, fill = "blue") + theme_economist_white() +
-  ggtitle("Overall Donor Age Distribution") + 
-  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(5,100,by = 20)) +
-  scale_y_continuous(breaks = seq(20,100,by = 20)) + xlim(c(20,100))
-
-ggplotly(p)
-  
-p
-
-ggplot(data = datavelvet, aes(x = Age)) + geom_histogram(fill ="blue")+ xlim(c(20,100))
-
-  
-
-
-```
-
-Another Histogram
-
-
-```{r}
-
-datavelvet %>%
-  filter(Age >= 10) %>%
-  filter(Age <= 90) %>%
-  ggplot(aes(Age)) + geom_histogram(fill = "#002845", bins = 20) + theme_economist_white() +
-  ggtitle("Overall Donor Age Distribution") + 
-  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
-  scale_y_continuous(breaks = seq(0,10000000,2000)) 
-
-```
-Age distribution by gender 
-
-```{r}
-#Age Gender filtered out below 15 and above 90 - also removed U X the weird values 
-datavelvet %>%
-  filter(Age >= 15) %>%
-  filter(Age <= 90) %>%
-  mutate(Sex = as.factor(Sex)) %>%
-  filter(Sex != "U") %>%
-  filter(Sex != "X") %>%
-  ggplot(aes(Age, fill = Sex)) + geom_histogram(bins = 25) + theme_economist_white() +
-  ggtitle("Age Distribution by Gender") + 
-  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,10)) +
-  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
-```
-
-Donor age distribution by marital status 
-
-```{r}
-#Age Marital Status
-datavelvet %>%
-  filter(Age >= 20) %>%
-  filter(Age <= 85) %>%
-  ggplot(aes(Age, fill = Married)) + geom_histogram(bins = 25) + theme_economist_white() +
-  ggtitle("Overall Donor Age Distribution by Marital Status") + 
-  xlab(NULL) + ylab(NULL) + scale_x_continuous(breaks = seq(0,120,5)) +
-  scale_y_continuous(breaks = seq(0,50000,2000)) + scale_fill_manual(values=c("#ff9973", "#00cfcc"))
-```
-
-Linear Model 
+Linear Models
 
 ```{r}
 #These will focus on predicting whether a constituent is a donor or non-donor. 
@@ -963,10 +962,7 @@ data_train %>%
 ```
 
 
-
-MORE MODELS
-
-Big logistic model
+Initial Logistic models
 
 ```{r}
 
@@ -991,7 +987,7 @@ summary(donor_logit2)
 
 ```
 
-
+Large fully processed Logistic model
 
 ```{r log}
 
@@ -1080,6 +1076,9 @@ p_test <-
 
 ```
 
+
+Calculating AUC of logistic model 3
+
 ```{r}
 
 #summary(donor_logit3)
@@ -1091,7 +1090,8 @@ print(calc_auc(p_train)$AUC)
 print(calc_auc(p_test)$AUC)
 ```
 
-RIDGE
+
+Ridge models
 
 ```{r}
 
@@ -1111,7 +1111,8 @@ plot(ridge_fit1)
 
 ```
 
-BIG RIDGE
+
+Ridge model with more variables added 
 
 ```{r}
 
@@ -1140,7 +1141,7 @@ ridge_coefs
 ```
 
 
-LASSO
+Lasso model 1
 
 ```{r}
 
@@ -1171,7 +1172,8 @@ plot(lasso_fit)
 
 ```
 
-LASSO 2
+Lasso model 2
+
 
 ```{r}
 
@@ -1192,6 +1194,7 @@ plot(lasso_fit2)
 
 ```
 
+Checking Lasso model 2 for coeff shrink
 
 ```{r}
 
@@ -1204,13 +1207,11 @@ plot(lasso_fit2$glmnet.fit, xvar="lambda")
 
 ```
 
-
-
-
+Elasticnet model part 1
 
 ```{r}
 
-enet_mod <- cva.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple + No_of_Children + Married,
+enet_mod <- cva.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + Age + school1_simple + insttype_simple + extra_simple + Married + donorseg_simple + nmb_degree + No_of_Children + jobtitle_simple,
                        data = data_train,
                        alpha = seq(0,1, by = 0.1))
 
@@ -1220,7 +1221,7 @@ plot(enet_mod)
 
 ```
 
-ELASTICNET
+Elasticnet model part 2
 
 ```{r elasticnet}
 
@@ -1256,7 +1257,8 @@ minlossplot(enet_mod, cv.type = "min")
 
 ```
 
-Ridges plot - could be useful for plotting donations vs donor segment
+
+Ridges plots - could be useful for plotting donations vs donor segment
 
 ```{r}
 
