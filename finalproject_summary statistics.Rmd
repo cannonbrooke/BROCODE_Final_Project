@@ -84,7 +84,8 @@ library("usmap")
 library("usdata")
 library("tidycensus")
 library("urbnthemes")
-
+library("randomForest")
+library("randomForestExplainer")
 #install.packages("remotes")
 #remotes::install_github("UrbanInstitute/urbnthemes", build_vignettes = TRUE)
 
@@ -479,7 +480,17 @@ married_fct =
            fct_explicit_na(Child.2.Feeder.School),
          ch2_feeder_simple = 
            fct_lump_n(Child.2.Feeder.School, n = 4),
+#Region 
+         region_fct = 
+           fct_explicit_na(region),
+         region_simple = 
+           fct_lump_n(region, n = 5),
+#Age
+         age_range_fct = 
+           fct_explicit_na(age_range),
     )
+
+    
 
 
 
@@ -883,9 +894,12 @@ dataclean <- dataclean %>%
       mutate(Married_simple = ifelse(Married == "N",0,1))
 
 
-dataclean <- dataclean %>%
+dataclean <- dataclean %>% 
   mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving)) %>%
-  mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1))
+  mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1)) %>% 
+  mutate(Lifetime.Giving.Plus = log(Lifetime.Giving + 1)) %>% 
+  mutate(average_yearly_donation = (HH.Total.Gifts.FY20.21+HH.Total.Gifts.FY19.20+HH.Total.Gifts.FY18.19+HH.Total.Gifts.FY17.18+HH.Total.Gifts.FY16.17)/5)
+
 
 
 
@@ -1363,24 +1377,34 @@ ggplot(data = corrplot_data, aes(x = nmb_degree, y = HH.Lifetime.Giving)) +
 ```
 
 
-Random Forest
+Random Forest 
 
 ```{r}
 
-library('randomForest')
+training <- subset(datavelvet, select= c(major_gifter,Age,sex_fct,Lifetime.Giving.Plus,jobtitle_simple
+                                         ,No_of_Children,region_fct,nmb_degree,Assignment_flag
+                                         ,donorseg_simple,Months.Since.Last.Gift,Last.Contact.Age
+                                         ,age_range_fct,school1_simple,insttype_simple,HH.First.Gift.Amount,Total.Giving.Years
+                                         ,average_yearly_donation))
 
-rf_fit_donor <- randomForest(Lifetime.Giving ~ ., 
-                       data = data_train,
+
+
+rf_fit_donor <- randomForest(Lifetime.Giving.Plus ~ ., 
+                       data = training,
                        type = classification,
-                       mtry = 7,
+                       mtry = 5,
                        na.action = na.roughfix,
-                       ntree = 200,
+                       ntree = 50,
                        importance=TRUE
                        )
 
 print(rf_fit_donor)
 
 
+```
+```{r, fig.width = 6, fig.height = 6}
+
+plot(rf_fit_donor)
 ```
 
 ```{r, fig.width = 6, fig.height = 6}
@@ -1390,12 +1414,12 @@ varImpPlot(rf_fit_donor, sort = TRUE,
            type = 2, class = NULL, scale = TRUE, 
            main = deparse(substitute(rf_fit_donor)))
 
-
+varImpPlot(rf_fit_donor,type = 1,scale = FALSE,n.var = 5,sort = TRUE)
 ```
 
 ```{r}
 
-library('randomForestExplainer')
+#Plotting Depth of Node usage
 
 plot_min_depth_distribution(
   rf_fit_donor,
@@ -1407,8 +1431,16 @@ plot_min_depth_distribution(
   main = "Distribution of minimal depth and its mean"
 )
 
+
+plot_min_depth_distribution(rf_fit_donor)
+
 ```
 
+```{r}
+explain_forest(rf_fit_donor, 
+               interactions = TRUE, 
+               data = datavelvet)
+```
 
 
 
@@ -1417,6 +1449,3 @@ plot_min_depth_distribution(
 data_category_split_out <- dataclean %>%
   mutate(Category.Codes = trim(strsplit(as.character(Category.Codes), "|", fixed = TRUE))) %>%
   unnest(Category.Codes) %>% pivot_wider(names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
-
-
-```
