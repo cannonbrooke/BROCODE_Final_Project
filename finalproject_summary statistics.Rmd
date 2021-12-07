@@ -1,7 +1,8 @@
 ---
 title: "BROCODE Summary Statistics"
 author: "Aaron Willis, Cannon Brooke, Joshua Henderson, Ryan Radcliff"
-subtitle: "BUS696 Final Project v21"
+subtitle: "BUS696 Final Project v22"
+github: https://github.com/cannonbrooke/BROCODE_Final_Project
 output:
   html_document:
     df_print: paged
@@ -500,6 +501,9 @@ married_fct =
 
 #add county after county name in order to use Urbnmapr
 
+
+
+
 dataclean <- dataclean %>%
   mutate(County =
       ifelse(is.na(County) == TRUE, County, paste0(County, " County"))) 
@@ -558,13 +562,14 @@ Region Analysis
 ```{r}
 #grouping by region and analyzing 
 dataclean %>%
+  filter(HH.Lifetime.Giving != 0)%>% #filtering out the 0s per our presentation and recommendations 
   group_by(region) %>%
   summarise(Count = length(region),
-            mean_total_giv = mean(HH.Lifetime.Giving)) %>%
+            median_total_giv = median(HH.Lifetime.Giving)) %>%
   arrange(-Count) %>%
   filter(Count >= 100) %>%
-  mutate(mean_total_giv = dollar(mean_total_giv)) %>%
-  kable(col.names = c("Region", "Count", "Mean HH Lifetime Giving"), align=rep('c', 3)) %>%
+  mutate(median_total_giv = dollar(median_total_giv)) %>%
+  kable(col.names = c("Region", "Count", "Median HH Lifetime Giving"), align=rep('c', 3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"),
                 full_width = F)
   
@@ -576,15 +581,16 @@ DonorSegment Analysis
 
 ```{r}
 #grouping by donorsegment and analyzing 
-dataclean %>%
+  dataclean %>%
+  filter(HH.Lifetime.Giving != 0)%>% #filtering 0s and adding median per
   group_by(Donor.Segment) %>%
   summarise(Count = length(Donor.Segment),
-            mean_total_giv = mean(HH.Lifetime.Giving)) %>%
+            median_total_giv = median(HH.Lifetime.Giving)) %>%
   arrange(-Count) %>%
   filter(Count >= 100) %>%
   #added scales package to have the values show in dollar 
-  mutate(mean_total_giv = (dollar(mean_total_giv))) %>%
-  kable(col.names = c("Donor Segment", "Count", "Mean HH Lifetime Giving"), align=rep('c', 3)) %>%
+  mutate(median_total_giv = (dollar(median_total_giv))) %>%
+  kable(col.names = c("Donor Segment", "Count", "Median HH Lifetime Giving"), align=rep('c', 3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"),
                 full_width = F)
   
@@ -594,7 +600,10 @@ dataclean %>%
 First gift size analysis
 
 ```{r}
-aq <- quantile(dataclean$HH.First.Gift.Amount, probs = c(.25,.50,.75,.9,.99), na.rm = TRUE)
+
+dataclean %>%
+  filter(HH.Lifetime.Giving != 0)
+  aq <- quantile(dataclean$HH.First.Gift.Amount, probs = c(.25,.50,.75,.9,.99), na.rm = TRUE)
 
 aq <- as.data.frame(aq)
 
@@ -1025,24 +1034,24 @@ data_train %>%
 Initial Logistic models
 
 ```{r}
-
+#removing since we didn't use it 12/7
 # Set family to binomial to set logistic function
 # Run the model on the training set
 
-donor_logit1 <-
-  glm(hh.lifetime.giving_fct ~ Married_simple,
-      family = "binomial",
-      data = data_train)
-
-summary(donor_logit1)
-
-
-donor_logit2 <-
-  glm(hh.lifetime.giving_fct ~ No_of_Children,
-      family = "binomial",
-      data = data_train)
-
-summary(donor_logit2)
+# donor_logit1 <-
+#   glm(hh.lifetime.giving_fct ~ Married_simple,
+#       family = "binomial",
+#       data = data_train)
+# 
+# summary(donor_logit1)
+# 
+# 
+# donor_logit2 <-
+#   glm(hh.lifetime.giving_fct ~ No_of_Children,
+#       family = "binomial",
+#       data = data_train)
+# 
+# summary(donor_logit2)
 
 
 ```
@@ -1151,27 +1160,6 @@ print(calc_auc(p_test)$AUC)
 ```
 
 
-Ridge models
-
-```{r}
-
-library('glmnet')
-library('glmnetUtils')
-
-ridge_fit1 <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + donorseg_fct + No_of_Children,
-                       data = data_train,
-                       alpha = 0)
-
-#Alpha 0 sets the Ridge
-print(ridge_fit1)
-print(ridge_fit1$lambda.min)
-
-print(ridge_fit1$lambda.1se)
-plot(ridge_fit1)
-
-```
-
-
 Ridge model with more variables added 
 
 ```{r}
@@ -1216,19 +1204,19 @@ Lasso model 1
 
 
 
-library(glmnet)
-library(glmnetUtils)
-lasso_fit <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple + No_of_Children + Married,
-                       data = data_train,
-                       #Alpha 1 for lasso
-                       alpha = 1)
+# library(glmnet)
+# library(glmnetUtils)
+# lasso_fit <- cv.glmnet(HH.Lifetime.Giving.Plus ~ sex_fct + jobtitle_simple + nmb_degree + school1_simple + hhfirstgift_simple + maj1_simple + donorseg_simple + No_of_Children + Married,
+#                        data = data_train,
+#                        #Alpha 1 for lasso
+#                        alpha = 1)
 
 
-print(lasso_fit$lambda.min)
-#
-print(lasso_fit$lambda.1se)
-
-plot(lasso_fit)
+# print(lasso_fit$lambda.min)
+# #
+# print(lasso_fit$lambda.1se)
+# 
+# plot(lasso_fit)
 
 ```
 
