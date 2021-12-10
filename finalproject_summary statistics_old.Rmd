@@ -694,7 +694,7 @@ Mean age by gender
 tally(group_by(dataclean, Sex))
 
 summarize(group_by(dataclean, Sex), 
-          avg_giving = mean(HH.Lifetime.Giving, na.rm = TRUE),
+          avg_giving = mean(Lifetime.Giving, na.rm = TRUE),
           avg_age = mean(Age, na.rm = TRUE),
           med_age = median(Age, na.rm = TRUE))
 
