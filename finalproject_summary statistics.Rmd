@@ -90,6 +90,7 @@ library("randomForestExplainer")
 library('glmnet')
 library('glmnetUtils')
 library('plotROC')
+library('ggridges')
 
 
 
@@ -311,6 +312,17 @@ dataclean <-dataclean %>%
     NA)))))))))))
 
 sum(is.na(dataclean$zipcode_slry))
+
+#converting married Y and N to 1 and 0 
+dataclean <- dataclean %>%
+      mutate(Married_simple = ifelse(Married == "N",0,1))
+
+
+dataclean <- dataclean %>% 
+  mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving)) %>%
+  mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1)) %>% 
+  mutate(Lifetime.Giving.Plus = log(Lifetime.Giving + 1)) %>% 
+  mutate(average_yearly_donation = (HH.Total.Gifts.FY20.21+HH.Total.Gifts.FY19.20+HH.Total.Gifts.FY18.19+HH.Total.Gifts.FY17.18+HH.Total.Gifts.FY16.17)/5)
 
 #adding scholarship data (y/n)
 schlr <- read.csv(here::here("final_project", "scholarship.csv"),
@@ -673,13 +685,16 @@ ggplot(dataclean,
 
 Boxplot of the Age Ranges Against the Lifetime Giving Amounts with a log scale applied - the reason we applied log scale is to resolve issues with visualizations that skew towards large values in our dataset. 
 
+THIS CHUCNK WOULD NOT RUN ON FINAL COMPILATION. IT CLEARLY RAN DURING THE PREP OF OUR POWERPOINT PRESENTATION
+
 ```{r}
 
-ggplot(dataclean, aes(age_range,HH.Lifetime.Giving.Plus,fill = age_range)) + 
-  geom_boxplot(
-  outlier.colour = "red") + 
-    theme(axis.text.x=element_text(angle=45,hjust=1))  + labs(x = "Age Range", y = "Lifetime Giving Amount") +
-      ggtitle("Lifetime Giving Compared Across Age Ranges")
+#ggplot(dataclean, aes(age_range,HH.Lifetime.Giving,fill = age_range)) + 
+ # geom_boxplot(
+ # outlier.colour = "red") + 
+ # scale_y_log10() +
+ # theme(axis.text.x=element_text(angle=45,hjust=1))  + labs(x = "Age Range", y = "Lifetime Giving Amount") +
+  #    ggtitle("Lifetime Giving Compared Across Age Ranges")
   
 
 ```
@@ -913,12 +928,12 @@ spatial_data %>%
       filter(HH.Lifetime.Giving > 0)%>%
   ggplot() +
     geom_sf(mapping = aes(fill = log(HH.Lifetime.Giving),na.rm=TRUE, show.legend = "polygon"),
-                 color = "#ffffff", size = 0.10) +
+                 color = "#666666", size = 0.10) +
      coord_sf(datum = NA) +
     scale_fill_gradient(low = ("lightblue"),high = ("blue"),labels = scales::dollar) +
   labs(fill = "Household Lifetime Giving")
 
-#cannot figure out how to exp the legend value after loggin HH.Lifetime.Giving 
+#cannot figure out how to exp the legend value after logging HH.Lifetime.Giving 
 
 ```
 
@@ -928,108 +943,6 @@ spatial_data %>%
 Splitting data and creating a new set for easier analysis
 
 ``` {r}
-
-#converting married Y and N to 1 and 0 
-dataclean <- dataclean %>%
-      mutate(Married_simple = ifelse(Married == "N",0,1))
-
-
-dataclean <- dataclean %>% 
-  mutate(hh.lifetime.giving_fct = as.factor(HH.Lifetime.Giving)) %>%
-  mutate(HH.Lifetime.Giving.Plus = log(HH.Lifetime.Giving + 1)) %>% 
-  mutate(Lifetime.Giving.Plus = log(Lifetime.Giving + 1)) %>% 
-  mutate(average_yearly_donation = (HH.Total.Gifts.FY20.21+HH.Total.Gifts.FY19.20+HH.Total.Gifts.FY18.19+HH.Total.Gifts.FY17.18+HH.Total.Gifts.FY16.17)/5)
-
-
-
-
-#Creating the velvet set - only the best can enter
-
-datavelvet <- subset(dataclean,select = -c(
-  age_range,
-  Athletics,
-  Birthdate,
-  Category.Codes,
-  Category.Descriptions,
-  Child.1.Enroll.Status,
-  Child.1.ID,
-  Child.2.ID,
-  Child.1.Major,
-  Child.1.Minor,
-  Child.1.School,
-  Child.1.Feeder.School,
-  Child.2.Enroll.Status,
-  Child.2.Major,
-  Child.2.Minor,
-  Child.2.School,
-  Child.2.Feeder.School,
-  ch1_enroll_fct,
-  ch1_maj_fct,
-  ch1_min_fct,
-  ch1_school_fct,
-  ch1_feeder_fct,
-  ch2_school_fct,
-  ch2_feeder_fct,
-  ch2_maj_fct,
-  ch2_min_fct,
-  Contact.Rules,
-  Degree.Type.1,
-  Degree.Type.2,
-  Donor.Segment,
-  City,
-  County,
-  Conferral.Date.1,
-  Conferral.Date.2,
-  Contact.Rules,
-  contact_fct,
-  Degree.Type.1,
-  Degree.Type.2,
-  deg1_fct,
-  deg2_fct,
-  donorseg_fct,
-  Extracurricular,
-  extra_fct,
-  HH.First.Gift.Fund,
-  HH.First.Gift.Date,
-  hhfirstgift_fct,
-  hh.lifetime.giving_fct,
-  ID,
-  Institution.Type,
-  insttype_fct,
-  Job.Title,
-  jobtitle_fct,
-  Last.Contact.By.Anyone,
-  LegacyLeader..compass.score.,
-  major_gifter,
-  Major.1,
-  Major.2,
-  Minor.1,
-  Minor.2,
-  maj1_fct,
-  maj2_fct,
-  min1_fct,
-  min2_fct,
-  region,
-  zipcode_slry,
-  Sex,
-  Scholarship,
-  School.1,
-  School.2,
-  school1_fct,
-  school2_fct,
-  Spouse.Birthdate,
-  Spouse.Mail.Rules,
-  spomail_fct,
-  State,
-  Zip,
-  zipslry_range
-))
-
-#datavelvet <-
-#datavelvet[sapply(datavelvet, is.character)] <- #lapply(datavelvet[sapply(datavelvet, is.character)], 
-#                                                           as.factor)
-
-library("rsample")
 
 data_split <- initial_split(dataclean, prop = 0.75)
 
@@ -1360,8 +1273,6 @@ Ridges plots - could be useful for plotting donations vs donor segment
 
 ```{r}
 
-library('ggridges')
-
 summary(data_train$variable)
 
 ggplot(data_train, aes(x = HH.Lifetime.Giving, y = region)) + geom_density_ridges(rel_min_height = 0.005) + xlim(c(25000, 100000)) + 
@@ -1370,8 +1281,6 @@ ggplot(data_train, aes(x = HH.Lifetime.Giving, y = region)) + geom_density_ridge
 ```
 
 ```{r}
-
-library('corrplot')
 
 #removing ID zip and nonnumeric 
 corrplot_data <- dataclean[-c(1:48,52:56,58:60,63,66:67,70:72,74:81,83:138)]
@@ -1415,7 +1324,7 @@ ggplot(data = corrplot_data, aes(x = nmb_degree, y = HH.Lifetime.Giving)) +
 
 Random Forest 
 
-```{r}
+```{r, cache=TRUE}
 
 training <- subset(dataclean, select= c(major_gifter,Age,sex_fct,Lifetime.Giving.Plus,jobtitle_simple
                                          ,No_of_Children,region_fct,nmb_degree,Assignment_flag
@@ -1438,12 +1347,12 @@ print(rf_fit_donor)
 
 
 ```
-```{r, fig.width = 6, fig.height = 6}
+```{r, fig.width = 6, fig.height = 6, cache=TRUE}
 
 plot(rf_fit_donor)
 ```
 
-```{r, fig.width = 6, fig.height = 6}
+```{r, fig.width = 6, fig.height = 6, cache=TRUE}
 
 varImpPlot(rf_fit_donor, sort = TRUE, 
            n.var = 5,
@@ -1453,19 +1362,19 @@ varImpPlot(rf_fit_donor, sort = TRUE,
 varImpPlot(rf_fit_donor,type = 1,scale = FALSE,n.var = 5,sort = TRUE)
 ```
 
-```{r}
+```{r, cache=TRUE}
 
 #Plotting Depth of Node usage
 
-plot_min_depth_distribution(
-  rf_fit_donor,
-  k = 10,
-  min_no_of_trees = 0,
-  mean_sample = "top_trees",
-  mean_scale = FALSE,
-  mean_round = 2,
-  main = "Distribution of minimal depth and its mean"
-)
+# plot_min_depth_distribution(
+#   rf_fit_donor,
+#   k = 10,
+#   min_no_of_trees = 0,
+#   mean_sample = "top_trees",
+#   mean_scale = FALSE,
+#   mean_round = 2,
+#   main = "Distribution of minimal depth and its mean"
+# )
 
 
 plot_min_depth_distribution(rf_fit_donor)
@@ -1475,6 +1384,8 @@ plot_min_depth_distribution(rf_fit_donor)
 
 ```{r}
 #Splitting Category out to check if the category is useful for analysis
-data_category_split_out <- dataclean %>%
-  mutate(Category.Codes = trim(strsplit(as.character(Category.Codes), "|", fixed = TRUE))) %>%
-  unnest(Category.Codes) %>% pivot_wider(names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
+#data_category_split_out <- dataclean %>%
+ # mutate(Category.Codes = trim(strsplit(as.character(Category.Codes), "|", fixed = TRUE))) %>%
+ # unnest(Category.Codes) %>% pivot_wider(names_from = Category.Codes,values_from =Category.Codes, values_fn = length)
+
+#We ran analysis and did not find the data useful
